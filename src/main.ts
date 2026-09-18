@@ -1,3 +1,4 @@
+import { assetUrl } from './asset-url';
 import type { FactoryDebugState } from './factory-debug';
 import { Application } from 'pixi.js';
 import { Camera } from './camera';
@@ -37,10 +38,10 @@ appElement.innerHTML = `
   <footer class="bottom-hud">
     <div class="hint"><span class="mouse-icon"></span><span>Drag to explore<span class="hint-divider"> / </span>Scroll to zoom</span><span class="keyboard-hint"><kbd>W A S D</kbd> move <kbd>M</kbd> map</span></div>
     <div class="quickbar" role="navigation" aria-label="Factory locations">
-      <button class="slot active" data-go="home" title="Home (1 / H)"><span class="slot-key" aria-hidden="true">1</span><img src="/factorio/icons/iron-plate.png" alt=""/><span>Home</span></button>
-      <button class="slot" data-go="aws-foundation" title="AWS Foundation (2)"><span class="slot-key" aria-hidden="true">2</span><img src="/factorio/icons/processing-unit.png" alt=""/><span>AWS Foundation</span></button>
+      <button class="slot active" data-go="home" title="Home (1 / H)"><span class="slot-key" aria-hidden="true">1</span><img src="${assetUrl('factorio/icons/iron-plate.png')}" alt=""/><span>Home</span></button>
+      <button class="slot" data-go="aws-foundation" title="AWS Foundation (2)"><span class="slot-key" aria-hidden="true">2</span><img src="${assetUrl('factorio/icons/processing-unit.png')}" alt=""/><span>AWS Foundation</span></button>
       <button class="slot" data-go="auxide" title="Auxide (3)"><span class="slot-key" aria-hidden="true">3</span><span class="speaker-icon" aria-hidden="true"></span><span>Auxide</span></button>
-      <button class="slot" data-go="caz-nix" title="caz.nix (4)"><span class="slot-key" aria-hidden="true">4</span><img src="/factorio/icons/iron-gear-wheel.png" alt=""/><span>caz.nix</span></button>
+      <button class="slot" data-go="caz-nix" title="caz.nix (4)"><span class="slot-key" aria-hidden="true">4</span><img src="${assetUrl('factorio/icons/iron-gear-wheel.png')}" alt=""/><span>caz.nix</span></button>
       <span class="slot-separator"></span>
       <button class="slot action" id="pause" aria-label="Pause factory animation" aria-pressed="false"><span class="pause-icon">Ⅱ</span><span>Pause</span></button>
     </div>
@@ -53,9 +54,9 @@ appElement.innerHTML = `
       <p>I'm a platform engineer specializing in data infrastructure. I like making complicated systems understandable, repeatable, and easier for other people to work with. Outside work, that usually means my homelab, a side project, or a very large Factorio factory.</p>
       <p>Factorio is my favorite game. To me, it's software engineering in game form, and playing it has made me better at my job. I built this site because it seemed like a really fun way to show off some stuff I've built.</p>
       <h2>A few things I've built</h2>
-      <a class="project" href="#aws-foundation"><img src="/factorio/icons/processing-unit.png" alt=""/><span><strong>AWS Foundation <b>→</b></strong><small>My reusable setup for managing multiple AWS accounts with infrastructure as code.</small><em>OPENTOFU / AWS / GITHUB ACTIONS</em></span></a>
+      <a class="project" href="#aws-foundation"><img src="${assetUrl('factorio/icons/processing-unit.png')}" alt=""/><span><strong>AWS Foundation <b>→</b></strong><small>My reusable setup for managing multiple AWS accounts with infrastructure as code.</small><em>OPENTOFU / AWS / GITHUB ACTIONS</em></span></a>
       <a class="project" href="#auxide"><span class="speaker-icon" aria-hidden="true"></span><span><strong>Auxide <b>→</b></strong><small>My self-hosted Discord music bot, written in Rust.</small><em>RUST / TOKIO / NIX</em></span></a>
-      <a class="project" href="#caz-nix"><img src="/factorio/icons/iron-gear-wheel.png" alt=""/><span><strong>caz.nix <b>→</b></strong><small>The Nix configuration for my home server and WSL development environment.</small><em>NIXOS / LINUX / OBSERVABILITY</em></span></a>
+      <a class="project" href="#caz-nix"><img src="${assetUrl('factorio/icons/iron-gear-wheel.png')}" alt=""/><span><strong>caz.nix <b>→</b></strong><small>The Nix configuration for my home server and WSL development environment.</small><em>NIXOS / LINUX / OBSERVABILITY</em></span></a>
       <div class="dossier-contact"><a href="mailto:joshuacazalas@gmail.com">Email me ↗</a><a href="https://github.com/joshcazalas" target="_blank" rel="noopener noreferrer">GitHub ↗</a><a href="https://www.linkedin.com/in/joshcazalas/" target="_blank" rel="noopener noreferrer">LinkedIn ↗</a></div>
       <p class="colophon">Factory artwork © Wube Software.</p>
     </div>

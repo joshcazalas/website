@@ -1,0 +1,53 @@
+name: Package site
+
+on:
+  workflow_call:
+    inputs:
+      build-artifact:
+        type: string
+        required: true
+    outputs:
+      tag:
+        value: ${{ jobs.package.outputs.tag }}
+      artifact-name:
+        value: ${{ jobs.package.outputs.artifact-name }}
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    name: Package release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      tag: ${{ steps.package.outputs.tag }}
+      artifact-name: ${{ steps.identity.outputs.name }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          name: ${{ inputs.build-artifact }}
+          path: .local/ci-build
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+      - run: npm ci
+      - run: node scripts/build-artifact.ts restore
+      - name: Package the exact production build
+        id: package
+        run: node scripts/package-release.ts --build-artifact .local/ci-build
+      - name: Choose the release artifact identity
+        id: identity
+        run: echo "name=website-release-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_OUTPUT"
+      - name: Retain the release candidate
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ${{ steps.identity.outputs.name }}
+          path: ${{ steps.package.outputs.directory }}/*
+          if-no-files-found: error
+          retention-days: ${{ github.event_name == 'pull_request' && 3 || 14 }}
+          compression-level: 0

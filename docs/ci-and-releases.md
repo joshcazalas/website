@@ -98,12 +98,15 @@ ruleset bypass is what permits CI overrides while blocking direct pushes.
 
 ## Release builds
 
-Each merge to `main` reruns the same validation on the merged commit. This matters
-with non-strict PR checks and intentional merge bypasses. A failed merged build
-does not publish, even if the PR was deliberately merged with failing CI.
+Pull requests run the complete validation suite. After a merge, the release
+workflow builds and packages main, then attests and publishes when enabled. It
+does not repeat the simulation, browser, lint, or secret checks. This deliberately
+trusts the maintainer's review of PR results; non-strict checks do not test the
+combined result of independently passing PRs, and a bypass does not trigger a
+second test gate. Normal build type checks and artifact integrity checks remain.
 
-After successful browser checks, the existing `dist/` is packaged without a
-rebuild. The release identity is `website-YYYY.MM.DD-g<12-character-commit>`, using
+Both workflows share the same build and packaging jobs. PR browser jobs consume
+that build before packaging; main packages its fresh build directly. The release identity is `website-YYYY.MM.DD-g<12-character-commit>`, using
 the commit's UTC date. An archive round trip verifies its contents match the
 tested output. Packaging requires a clean tracked worktree.
 
@@ -118,6 +121,8 @@ Release files:
 | `sbom-build.cdx.json` | CycloneDX inventory including build and test dependencies |
 | `manifest.json` | Source identity, toolchain, dependency lock digest, and hashes of the files above |
 | `SHA256SUMS` | Checksums including the manifest |
+| `provenance.sigstore.json` | Offline provenance verification bundle for all seven files above; added at publication |
+| `sbom.sigstore.json` | Offline runtime SBOM attestation bound to the website archive; added at publication |
 
 The SBOMs describe installed dependency graphs; they do not claim every file from
 every dependency survived Vite's tree shaking. Media is inventoried separately.
@@ -130,7 +135,7 @@ If the repo becomes public before release publication is enabled, candidate
 artifacts containing media are not uploaded.
 
 Once publication is explicitly enabled, a separate job with write/signing
-permissions downloads the tested artifact, verifies its full file set and hashes,
+permissions downloads the packaged artifact, verifies its full file set and hashes,
 attests every release file, and binds the runtime SBOM to the website archive's
 digest. It creates a draft release, uploads everything, publishes, and verifies
 the resulting immutable release. No npm install or application tests run in the
@@ -146,14 +151,22 @@ gh api repos/joshcazalas/website/immutable-releases
 
 ## Server deployment
 
-No server deployment is configured by this repository. The later `caz.nix` module
-should serve verified release files through Caddy, with no GitHub Actions
-credential capable of reaching the server. Verification must check the exact
-repository, `release.yml` workflow, `main` source ref, commit, and artifact digest.
-The updater should validate the manifest and archive members before extraction,
-keep previous releases, switch atomically, check page and asset health, roll back
-failures, and quarantine rejected releases. Serving versioned asset URLs must
-also be addressed so already-open tabs remain compatible across deployments.
+The server integration lives in the [caz.nix website module](https://github.com/joshcazalas/caz.nix/blob/main/modules/nixos/website.nix).
+Its [operations guide](https://github.com/joshcazalas/caz.nix/blob/main/docs/website.md)
+covers private LAN previews, verified public releases, retention, and rollback.
+GitHub Actions receives no credential capable of reaching the server.
+
+Release manifest schema 2 records an asset prefix of
+`/releases/<full-commit>/`. Scripts, fonts, sprites, and audio all use that
+prefix, and `release.json` identifies the build for HTTP health checks. The server
+retains older release directories so existing tabs can fetch their original
+assets after activation. Root HTML is served without caching.
+
+Private candidates may be imported manually into a separate LAN preview. Signed
+release mode checks the exact repository, workflow, main ref, commit, and artifact
+digests using the attached bundles before extraction and atomic activation. The
+first real signing and verification run awaits explicitly approved public release
+publication; local tests use synthetic signing-policy fixtures.
 
 Attestations establish origin and integrity. They do not prove that code is free
 of bugs, that dependencies are safe, or that asset distribution is permitted.

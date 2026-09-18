@@ -1,3 +1,4 @@
+import { assetUrl } from './asset-url';
 import { Assets, Container, Graphics, Particle, ParticleContainer, Rectangle, Sprite, Texture, TilingSprite } from 'pixi.js';
 import rawCatalog from './asset-catalog.json';
 import { beltCells, beltPosition, beltRow, createRailLoop, nearestRailDistance, railPosition, wrapDistance, type RailLoop, type Cell, type Point } from './paths';
@@ -46,12 +47,12 @@ export class FactoryCore {
   private beltFrames: Texture[][] = [];
 
   async load(onProgress: (fraction: number) => void) {
-    const response = await fetch('/factorio/packed/manifest.json');
+    const response = await fetch(assetUrl('factorio/packed/manifest.json'));
     if (!response.ok) throw new Error('Packed sprites are missing. Run npm run assets:import.');
     const manifest: Packed = await response.json();
     let done = 0;
     const atlases = await Promise.all(Array.from({ length: manifest.pages }, async (_, i) => {
-      const texture = await Assets.load<Texture>(`/factorio/packed/atlas-${i}.png`);
+      const texture = await Assets.load<Texture>(assetUrl(`factorio/packed/atlas-${i}.png`));
       texture.source.scaleMode = 'linear'; onProgress(++done / manifest.pages); return texture;
     }));
     for (const [name, spec] of Object.entries(manifest.assets)) {

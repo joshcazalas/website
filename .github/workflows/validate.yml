@@ -51,53 +51,9 @@ jobs:
           .local/tools/gitleaks dir --redact --no-banner .local/scan
 
   build:
-    name: Build production artifact
-    runs-on: ubuntu-24.04
-    timeout-minutes: 15
-    outputs:
-      artifact-name: ${{ steps.identity.outputs.name }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - name: Keep media artifacts private until public releases are approved
-        env:
-          REPO_PRIVATE: ${{ github.event.repository.private }}
-          RELEASES_ENABLED: ${{ vars.RELEASES_ENABLED }}
-        run: |
-          if [ "$REPO_PRIVATE" != true ] && [ "$RELEASES_ENABLED" != true ]; then
-            echo 'Public media artifacts require explicit release approval. Keep this repo private until then.' >&2
-            exit 1
-          fi
-      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
-        with:
-          node-version-file: .node-version
-          package-manager-cache: false
-      - run: npm ci
-      # A separate repository credential is scoped to asset retrieval, never to npm or browser tests.
-      # Fork pull requests receive no secret and intentionally cannot satisfy the browser gate.
-      - name: Fetch the pinned private asset pack
-        env:
-          GH_TOKEN: ${{ secrets.ASSETS_READ_TOKEN }}
-        run: |
-          if [ -z "$GH_TOKEN" ]; then
-            echo 'ASSETS_READ_TOKEN is required. Fork contributions need a reviewed maintainer branch for the full browser checks.' >&2
-            exit 1
-          fi
-          node scripts/assets.ts fetch
-      - run: npm run build
-      - name: Record the build and its original dependency inventories
-        run: node scripts/build-artifact.ts create
-      - name: Choose the shared artifact identity
-        id: identity
-        run: echo "name=website-build-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_OUTPUT"
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: ${{ steps.identity.outputs.name }}
-          path: .local/ci-build/*
-          if-no-files-found: error
-          retention-days: 3
-          compression-level: 0
+    uses: ./.github/workflows/build.yml
+    secrets:
+      ASSETS_READ_TOKEN: ${{ secrets.ASSETS_READ_TOKEN }}
 
   browser:
     name: Browser (${{ matrix.suite }})
@@ -133,42 +89,11 @@ jobs:
         run: node scripts/build-artifact.ts verify
 
   package:
-    name: Package tested release
     if: inputs.package-release
     needs: [source, build, browser]
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    outputs:
-      tag: ${{ steps.package.outputs.tag }}
-      artifact-name: ${{ steps.identity.outputs.name }}
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
-        with:
-          name: ${{ needs.build.outputs.artifact-name }}
-          path: .local/ci-build
-      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
-        with:
-          node-version-file: .node-version
-          package-manager-cache: false
-      - run: npm ci
-      - run: node scripts/build-artifact.ts restore
-      - name: Package the exact tested build
-        id: package
-        run: node scripts/package-release.ts --build-artifact .local/ci-build
-      - name: Choose the release artifact identity
-        id: identity
-        run: echo "name=website-release-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_OUTPUT"
-      - name: Retain the tested release candidate
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: ${{ steps.identity.outputs.name }}
-          path: ${{ steps.package.outputs.directory }}/*
-          if-no-files-found: error
-          retention-days: ${{ github.event_name == 'pull_request' && 3 || 14 }}
-          compression-level: 0
+    uses: ./.github/workflows/package.yml
+    with:
+      build-artifact: ${{ needs.build.outputs.artifact-name }}
 
   validate:
     name: All checks passed
