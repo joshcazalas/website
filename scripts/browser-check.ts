@@ -1,5 +1,5 @@
-import { enterFactory } from './browser-helpers.mjs';
-import { chromium } from '@playwright/test';
+import { enterFactory } from './browser-helpers.ts';
+import { chromium, type Page } from '@playwright/test';
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 
@@ -7,7 +7,7 @@ await mkdir('.local/screenshots', { recursive: true });
 const browser = await chromium.launch({ headless: true,
   executablePath: process.env.BROWSER_EXECUTABLE_PATH || undefined,
   args: ['--no-sandbox', '--enable-unsafe-swiftshader', '--disable-dev-shm-usage'] });
-const errors = [];
+const errors: string[] = [];
 try {
   const page = await browser.newPage({ viewport: process.env.MOBILE_ONLY ? { width: 390, height: 844 } : { width: 1600, height: 1000 } });
   page.on('pageerror', error => errors.push(error.message));

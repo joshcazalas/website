@@ -14,6 +14,8 @@ concurrency:
 jobs:
   checks:
     uses: ./.github/workflows/validate.yml
+    with:
+      package-release: true
     secrets:
       ASSETS_READ_TOKEN: ${{ secrets.ASSETS_READ_TOKEN }}
 

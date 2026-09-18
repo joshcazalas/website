@@ -39,7 +39,7 @@ plus the custom nameplate. Extra original sprites, local PDFs, and other files i
 To change assets:
 
 1. Update the catalog/importer/sample list and import from the intended game version.
-2. Run `python3 scripts/assets.py pack --game-version VERSION --tag UNIQUE-TAG`.
+2. Run `node scripts/assets.ts pack --game-version VERSION --tag UNIQUE-TAG`.
 3. Upload `.local/asset-packs/factorio-runtime.tar.gz` and its `assets.lock.json`
    to a **draft** release in the private asset repo, then publish the complete release.
 4. Submit the updated website lock and source changes in a PR.
@@ -56,12 +56,19 @@ simulation tests, archive security tests, Actionlint, and Gitleaks across the
 complete checkout history and tracked tree. Tool downloads are checksum-pinned;
 Actions use full commit pins. Dependabot proposes npm and Actions updates.
 
-The browser job independently fetches assets, installs locked dependencies, builds
-the production output, and runs every existing browser suite against that output:
-home/trains, menu/loading, AWS Foundation, Auxide/audio, and caz.nix/rollback.
-`Validate` succeeds only if both jobs succeed. Skips, cancellations, and failures
-do not satisfy it. The asset token is present only in the retrieval step, before
-npm installation or application tests.
+Source checks and the production build run in parallel. The build job fetches the
+pinned assets and uploads one production build with its original dependency
+inventories. Five browser jobs test that same build concurrently: home/trains,
+menu/loading, AWS Foundation, Auxide/audio, and caz.nix/rollback. Each verifies the
+source commit, dependency lock, and file hashes before and after testing. A final
+job packages the tested build, including on PRs. `Validate` requires all jobs to
+succeed; skipped, canceled, and failed checks do not satisfy it. The asset token
+is present only in the retrieval step, never in npm or browser-test steps.
+
+All repository scripts are TypeScript, run directly by Node 24 with no script
+transpilation step. `npm run check` separately checks the application and scripts
+in strict mode. Script checks enforce erasable syntax and explicit type imports
+to match Node's native type stripping, which does not perform type checking.
 
 Fork PRs receive no asset secret. They can run source checks, but cannot pass the
 full browser gate. Review an external contribution before copying it to a
@@ -115,7 +122,8 @@ Release files:
 The SBOMs describe installed dependency graphs; they do not claim every file from
 every dependency survived Vite's tree shaking. Media is inventoried separately.
 
-While private, release candidates are retained as Actions artifacts for 14 days.
+While private, release candidates are retained as Actions artifacts for 3 days on
+PRs and 14 days on main. The intermediate shared build is retained for 3 days.
 This is a test of the release build, not an attested deployable GitHub Release.
 Native GitHub build attestations are not available for this private repo's plan.
 If the repo becomes public before release publication is enabled, candidate

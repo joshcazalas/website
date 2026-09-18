@@ -1,5 +1,5 @@
-import { enterFactory as ready } from './browser-helpers.mjs';
-import { chromium } from '@playwright/test';
+import { enterFactory as ready } from './browser-helpers.ts';
+import { chromium, type Page } from '@playwright/test';
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 
@@ -7,15 +7,15 @@ await mkdir('.local/screenshots', { recursive: true });
 const browser = await chromium.launch({ headless: true, executablePath: process.env.BROWSER_EXECUTABLE_PATH || undefined,
   args: ['--no-sandbox', '--enable-unsafe-swiftshader', '--disable-dev-shm-usage'] });
 const base = process.env.TEST_URL || 'http://127.0.0.1:5173/';
-const errors = [];
-const watch = page => {
+const errors: string[] = [];
+const watch = (page: Page) => {
   page.on('pageerror', e => errors.push(e.message));
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
 };
-const state = page => page.evaluate(() => window.__factory.outpost);
+const state = (page: Page) => page.evaluate(() => window.__factory.outpost);
 const repoUrl = 'https://github.com/joshcazalas/aws-foundation';
 const mapRepo = `.world-link[href="${repoUrl}"]`;
-const checkRepoTab = async (page, activate) => {
+const checkRepoTab = async (page: Page, activate: () => Promise<unknown>) => {
   // Verify the real anchor/new-tab behavior without loading the external site.
   await page.context().route(repoUrl, route => route.fulfill({ contentType: 'text/html', body: '<title>Repository</title>' }));
   const opened = page.waitForEvent('popup');
@@ -45,9 +45,12 @@ try {
   await page.mouse.move(600, 700);await page.mouse.down();await page.mouse.move(660, 735, { steps: 8 });await page.mouse.up();
   await page.waitForTimeout(400);
   const pannedLink = await repo.boundingBox();
+  assert(initialLink && pannedLink, 'Repository link remains visible after panning');
   assert(pannedLink.x > initialLink.x + 40, 'Repository link follows camera panning');
   await page.mouse.move(450, 300);await page.mouse.wheel(0, -120);await page.waitForTimeout(900);
-  assert((await repo.boundingBox()).width > pannedLink.width * 1.1, 'Repository hit area scales with map zoom');
+  const zoomedLink = await repo.boundingBox();
+  assert(zoomedLink, 'Repository link remains visible after zooming');
+  assert(zoomedLink.width > pannedLink.width * 1.1, 'Repository hit area scales with map zoom');
   await repo.hover();await page.screenshot({ path: '.local/screenshots/outpost-repo-link.png' });
   await checkRepoTab(page, () => repo.click());
   await page.locator('#foundation-panel [data-go="aws-foundation"]').click();await page.waitForTimeout(900);
@@ -91,7 +94,7 @@ try {
   await page.waitForFunction(() => window.__factory.outpost.phase === 'online');
   assert.equal((await state(page)).built, complete.total, 'Skip and natural completion produce the same build');
   await page.locator('#foundation-panel .project-details summary').click();
-  assert(await page.locator('#foundation-panel .project-details').evaluate(e => e.open));
+  assert(await page.locator('#foundation-panel .project-details').evaluate(e => e instanceof HTMLDetailsElement && e.open));
   assert.match(await page.locator('#foundation-panel .project-details').innerText(), /infrastructure as code/);
 
   await page.goBack();
@@ -135,7 +138,7 @@ try {
   await checkRepoTab(mobile, () => mobile.locator(mapRepo).tap());
   await mobile.locator('#foundation-panel [data-go="aws-foundation"]').tap();
   await mobile.locator('#foundation-panel .project-details summary').tap();
-  assert(await mobile.locator('#foundation-panel .project-details').evaluate(e => e.open));
+  assert(await mobile.locator('#foundation-panel .project-details').evaluate(e => e instanceof HTMLDetailsElement && e.open));
   await mobile.locator('#foundation-panel .source-link').scrollIntoViewIfNeeded();
   await mobile.screenshot({ path: '.local/screenshots/outpost-mobile-details.png' });
   await mobile.locator('.slot[data-go="home"]').tap();

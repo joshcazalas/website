@@ -6,13 +6,13 @@ test('construction moves from an empty site through blueprint, boundaries, power
   assert.equal(deploymentPhase(null), 'ready');
   assert.equal(deploymentPhase(0), 'blueprint');
   for (const stage of FOUNDATION_STAGES) assert.equal(deploymentPhase(stage.start), stage.key);
-  assert.equal(deploymentPhase(FOUNDATION_STAGES.at(-1).end), 'power');
+  assert.equal(deploymentPhase(FOUNDATION_STAGES.at(-1)!.end), 'power');
   assert.equal(deploymentPhase(DEPLOYMENT_DURATION), 'online');
   assert.equal(deploymentPhase(100000), 'online');
 });
 
 test('every build lands within its stage, before power activates, with time to return', () => {
-  for (let stage = 0; stage < 3; stage++) for (const count of [1, 7, 120]) {
+  for (const stage of [0, 1, 2] as const) for (const count of [1, 7, 120]) {
     let previous = 0;
     for (let i = 0; i < count; i++) {
       const at = buildTime(stage, i, count);

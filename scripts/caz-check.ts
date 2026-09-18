@@ -1,21 +1,21 @@
-import { enterFactory as ready } from './browser-helpers.mjs';
-import { chromium } from '@playwright/test';
+import { enterFactory as ready } from './browser-helpers.ts';
+import { chromium, type Page } from '@playwright/test';
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 
 await mkdir('.local/screenshots',{recursive:true});
 const browser=await chromium.launch({headless:true,executablePath:process.env.BROWSER_EXECUTABLE_PATH||undefined,args:['--no-sandbox','--enable-unsafe-swiftshader','--disable-dev-shm-usage']});
 const base=process.env.TEST_URL||'http://127.0.0.1:5173/';
-const errors=[];
-const watch=page=>{
+const errors: string[] = [];
+const watch=(page: Page) =>{
   page.on('pageerror',e=>errors.push(e.message));
   page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
 };
-const state=page=>page.evaluate(()=>window.__factory.caz);
-const phase=(page,value)=>page.waitForFunction(value=>window.__factory.caz.phase===value,value,{timeout:35000});
+const state=(page: Page) =>page.evaluate(()=>window.__factory.caz);
+const phase=(page: Page,value: string)=>page.waitForFunction(value=>window.__factory.caz.phase===value,value,{timeout:35000});
 const repoUrl='https://github.com/joshcazalas/caz.nix';
 const mapRepo=`.world-link[href="${repoUrl}"]`;
-const checkRepoTab=async(page,activate)=>{
+const checkRepoTab=async (page: Page, activate: () => Promise<unknown>)=>{
   // Exercise the map anchor without contacting the external site.
   await page.context().route(repoUrl,route=>route.fulfill({contentType:'text/html',body:'<title>Repository</title>'}));
   const opened=page.waitForEvent('popup');
@@ -114,7 +114,7 @@ try {
   await mobile.locator('#caz-failure').uncheck();await mobile.locator('#caz-deploy').tap();await phase(mobile,'accepted');
   assert.equal((await state(mobile)).active,3);
   await mobile.locator('#caz-panel .project-details summary').tap();
-  assert(await mobile.locator('#caz-panel .project-details').evaluate(e=>e.open));
+  assert(await mobile.locator('#caz-panel .project-details').evaluate(e => e instanceof HTMLDetailsElement && e.open));
   await mobile.locator('#caz-panel .source-link').scrollIntoViewIfNeeded();
   await mobile.screenshot({path:'.local/screenshots/caz-mobile-details.png'});
   await mobile.locator('.slot[data-go="home"]').tap();

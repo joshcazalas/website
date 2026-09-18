@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { beltCells, beltPosition, beltRow, railway, createRailLoop, railPosition, nearestRailDistance } from '../src/paths.ts';
+import { type Point, beltCells, beltPosition, beltRow, railway, createRailLoop, railPosition, nearestRailDistance } from '../src/paths.ts';
 import { trainMotion, trainSchedule } from '../src/train-motion.ts';
 import { railNetwork } from '../src/rail-network.ts';
 
 test('conveyor paths retain both lanes through every turn and reversal', () => {
-  const routes = [
+  const routes: Point[][] = [
     [[0,0],[96,0],[96,96],[0,96],[0,192]],
     [[0,0],[0,-96],[-96,-96],[-96,96],[96,96],[96,0]],
   ];
@@ -37,7 +37,7 @@ test('conveyor corners appear once and invalid routes fail before rendering', ()
 test('railway distance samples keep trains together through bends', () => {
   const points=railway([[0,0],[1024,0],[1536,512],[1536,1536]],224);
   assert.deepEqual(points[0],[0,0]);
-  assert(Math.hypot(points.at(-1)[0]-1536,points.at(-1)[1]-1536)<8);
+  assert(Math.hypot(points.at(-1)![0]-1536,points.at(-1)![1]-1536)<8);
   let previousAngle=0;
   for(let i=1;i<points.length;i++) {
     const dx=points[i][0]-points[i-1][0],dy=points[i][1]-points[i-1][1];

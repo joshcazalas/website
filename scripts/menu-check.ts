@@ -1,20 +1,20 @@
-import { chromium } from '@playwright/test';
+import { chromium, type Page } from '@playwright/test';
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
-import { enterFactory } from './browser-helpers.mjs';
+import { enterFactory } from './browser-helpers.ts';
 await mkdir('.local/screenshots',{recursive:true});
 const browser=await chromium.launch({headless:true,executablePath:process.env.BROWSER_EXECUTABLE_PATH||undefined,args:['--no-sandbox','--enable-unsafe-swiftshader','--disable-dev-shm-usage']});
 const base=process.env.TEST_URL||'http://127.0.0.1:5173/';
-const ready=page=>page.waitForFunction(()=>window.__factory?.ready,null,{timeout:60000});
-const errors=[];
-const watch=page=>page.on('pageerror',e=>errors.push(e.message));
+const ready=(page: Page) =>page.waitForFunction(()=>window.__factory?.ready,null,{timeout:60000});
+const errors: string[] = [];
+const watch=(page: Page) =>page.on('pageerror',e=>errors.push(e.message));
 try {
   const page=await browser.newPage({viewport:{width:1600,height:1000}});watch(page);
   await page.goto(base);await ready(page);
   assert.equal(await page.locator('#entry-screen button:visible').count(),1);
-  assert(await page.locator('.entry-brand img[alt="Josh Cazalas"]').evaluate(e=>e.complete&&e.naturalWidth>0));
-  assert(await page.locator('#factory-shell').evaluate(e=>e.hidden));
-  assert(await page.locator('#factory-shell').evaluate(e=>e.inert));
+  assert(await page.locator('.entry-brand img[alt="Josh Cazalas"]').evaluate(e=>e instanceof HTMLImageElement && e.complete && e.naturalWidth>0));
+  assert(await page.locator('#factory-shell').evaluate(e => e instanceof HTMLElement && e.hidden));
+  assert(await page.locator('#factory-shell').evaluate(e => e instanceof HTMLElement && e.inert));
   const before=await page.evaluate(()=>({time:window.__factory.time,menu:window.__factory.menu,camera:window.__factory.camera}));
   await page.waitForTimeout(700);
   const after=await page.evaluate(()=>({time:window.__factory.time,menu:window.__factory.menu,camera:window.__factory.camera}));
@@ -27,11 +27,11 @@ try {
   // Capture the initial loading state in the same browser event as Play. On a
   // slow runner the 1.4s transition can finish between separate protocol calls.
   await page.evaluate(()=>{
-    document.querySelector('#play-factory').addEventListener('click',()=>{
-      const shell=document.querySelector('#factory-shell');
+    document.querySelector<HTMLElement>('#play-factory')!.addEventListener('click',()=>{
+      const shell=document.querySelector<HTMLElement>('#factory-shell')!;
       window.__menuLoadingSnapshot={
-        phase:document.querySelector('#entry-screen').dataset.state,
-        loadingVisible:!document.querySelector('#entry-loading').hidden,
+        phase:document.querySelector<HTMLElement>('#entry-screen')!.dataset.state,
+        loadingVisible:!document.querySelector<HTMLElement>('#entry-loading')!.hidden,
         shellHidden:shell.hidden,
         shellInert:shell.inert,
       };
@@ -42,10 +42,10 @@ try {
     phase:'loading',loadingVisible:true,shellHidden:true,shellInert:true,
   });
   await page.waitForFunction(()=>window.__factory.entered);
-  await page.waitForFunction(()=>document.querySelector('#entry-screen').hidden);
-  assert(!(await page.locator('#factory-shell').evaluate(e=>e.hidden)));
+  await page.waitForFunction(()=>document.querySelector<HTMLElement>('#entry-screen')!.hidden);
+  assert(!(await page.locator('#factory-shell').evaluate(e => e instanceof HTMLElement && e.hidden)));
   assert(await page.locator('#map').isVisible());
-  assert.equal(await page.evaluate(()=>document.activeElement.id),'factory-canvas');
+  assert.equal(await page.evaluate(()=>document.activeElement?.id),'factory-canvas');
   const stopped=await page.evaluate(()=>window.__factory.menu.seconds);await page.waitForTimeout(250);
   assert.equal(await page.evaluate(()=>window.__factory.menu.seconds),stopped);
   assert.equal(await page.locator('.quickbar .slot:visible').count(),5);
@@ -88,17 +88,17 @@ try {
   console.log('Passed: mobile layout, still reduced-motion backdrop, Play, and preserved project deep link.');
 
   const slow=await browser.newPage({viewport:{width:1280,height:800}});watch(slow);
-  let release;const gate=new Promise(resolve=>{release=resolve;});
+  const { promise: gate, resolve: release } = Promise.withResolvers<void>();
   await slow.route('**/factorio/packed/manifest.json',async route=>{await gate;await route.continue();});
   await slow.goto(base);await slow.locator('#play-factory').click();await slow.waitForTimeout(1650);
-  assert(await slow.locator('#entry-loading').isVisible());assert(await slow.locator('#factory-shell').evaluate(e=>e.hidden));
+  assert(await slow.locator('#entry-loading').isVisible());assert(await slow.locator('#factory-shell').evaluate(e => e instanceof HTMLElement && e.hidden));
   await slow.screenshot({path:'.local/screenshots/menu-loading.png'});
   release();await slow.waitForFunction(()=>window.__factory?.entered,null,{timeout:60000});await slow.close();
 
   const broken=await browser.newPage({viewport:{width:1280,height:800}});watch(broken);
   await broken.route('**/factorio/packed/manifest.json',route=>route.fulfill({status:404,body:'Missing assets'}));
   await broken.goto(base);await broken.locator('#entry-retry').waitFor({state:'visible'});
-  assert(await broken.locator('#factory-shell').evaluate(e=>e.hidden));
+  assert(await broken.locator('#factory-shell').evaluate(e => e instanceof HTMLElement && e.hidden));
   assert.match(await broken.locator('#entry-error').innerText(),/assets:import/);
   await broken.unroute('**/factorio/packed/manifest.json');
   await broken.locator('#entry-retry').click();await broken.locator('#play-factory').waitFor({state:'visible'});

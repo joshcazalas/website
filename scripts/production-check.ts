@@ -1,12 +1,12 @@
 import { spawn } from 'node:child_process';
 import { setTimeout as delay } from 'node:timers/promises';
 
-const suites = {
-  home: 'browser-check.mjs',
-  menu: 'menu-check.mjs',
-  foundation: 'outpost-check.mjs',
-  auxide: 'auxide-check.mjs',
-  caz: 'caz-check.mjs',
+const suites: Record<string, string> = {
+  home: 'browser-check.ts',
+  menu: 'menu-check.ts',
+  foundation: 'outpost-check.ts',
+  auxide: 'auxide-check.ts',
+  caz: 'caz-check.ts',
 };
 const requested = process.argv.slice(2);
 const selected = requested.length ? requested : Object.keys(suites);
@@ -28,7 +28,7 @@ try {
   if (!ready) throw new Error('Production preview did not become ready');
   for (const name of selected) {
     console.log(`Running production browser suite: ${name}`);
-    const env = { ...process.env, TEST_URL: url };
+    const env: NodeJS.ProcessEnv = { ...process.env, TEST_URL: url };
     // Local screenshot-only options must never weaken the CI gate.
     delete env.VISUAL_ONLY;
     delete env.MOBILE_ONLY;

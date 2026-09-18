@@ -1,3 +1,4 @@
+import type { FactoryDebugState } from './factory-debug';
 import { Application } from 'pixi.js';
 import { Camera } from './camera';
 import { Factory, WORLD, PLAZA, type Destination } from './factory';
@@ -303,7 +304,7 @@ async function start() {
     }
   });
   // Read-only instrumentation for checking rendering and navigation locally.
-  Object.defineProperty(window, '__factory', { configurable: true, get: () => ({ ready: true, entered: mainMenu.entered, entry: mainMenu.state, menu: menuBackdrop.state, machines: factory.machineCount, belts: factory.beltCount, crossings: factory.crossingCount, railRoutes: factory.railRoutes.length,
+  Object.defineProperty(window, '__factory', { configurable: true, get: (): FactoryDebugState => ({ ready: true, entered: mainMenu.entered, entry: mainMenu.state, menu: menuBackdrop.state, machines: factory.machineCount, belts: factory.beltCount, crossings: factory.crossingCount, railRoutes: factory.railRoutes.length,
     camera: { x: camera.x, y: camera.y, zoom: camera.zoom }, paused, time: elapsed, fps: app.ticker.FPS, trains:factory.trainState,
     destination, outpost: outpost.state, caz: { ...release.snapshot(elapsed), machines: caz.machineCount, belts: caz.beltCount, crossings: caz.crossingCount }, auxide: { selected: selectedServer, players: playback.snapshots(elapsed), audio: audio.state } }) });
   mainMenu.ready(() => {

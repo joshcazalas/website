@@ -1,6 +1,16 @@
 {
+  "schema": 1,
+  "repository": "joshcazalas/website-assets",
+  "tag": "factorio-2.0.77-v2",
   "archive": "factorio-runtime.tar.gz",
+  "sha256": "4aa899d74799014e7788a001f5f807756130f6e73291b2547789dedc8bf1e726",
+  "size": 9956849,
   "factorio_version": "2.0.77",
+  "inputs": {
+    "src/asset-catalog.json": "677d2b72c85125e76775ec959b654e555a2afb99cd26e605fe0e33cd01f3b240",
+    "src/auxide-samples.json": "890f822eb41dce3572ec8bb6df159f6592c42677e670a86a410e892c11d57f28",
+    "scripts/import-assets.ts": "521cd2e3883ccf276dbabceb6cbca3bf07190124c32e16e53919be5107267d0e"
+  },
   "files": {
     "fonts/NotoMono-Regular.ttf": {
       "sha256": "41fd7ccc82375e2a1e47f0cc2c941c14d7c99ba2f57cf69c9f738d07fb257686",
@@ -82,15 +92,5 @@
       "sha256": "410791cd38a98cfe624b774488b7c7d195523d385c7ff9c775125232d4530a18",
       "size": 12391
     }
-  },
-  "inputs": {
-    "scripts/import-assets.mjs": "837bf74dbdd2061d2f6302eacf3b5a3bb87e7d50d46e53e39bdab170c2dc0513",
-    "src/asset-catalog.json": "677d2b72c85125e76775ec959b654e555a2afb99cd26e605fe0e33cd01f3b240",
-    "src/auxide-samples.json": "890f822eb41dce3572ec8bb6df159f6592c42677e670a86a410e892c11d57f28"
-  },
-  "repository": "joshcazalas/website-assets",
-  "schema": 1,
-  "sha256": "c115a022415e32813432c4617955dfa258a02fafcde9d6719591f93ee136a588",
-  "size": 9955756,
-  "tag": "factorio-2.0.77-v1"
+  }
 }

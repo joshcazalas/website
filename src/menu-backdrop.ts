@@ -8,7 +8,8 @@ const SCENE_SECONDS=18;
 /** Small, close-up tableaux in the style of Factorio's live menu simulations. */
 class MenuScene extends FactoryCore {
   protected animateConveyors=true;
-  constructor(private kind: number) { super(); }
+  private readonly kind: number;
+  constructor(kind: number) { super(); this.kind = kind; }
   protected build() {
     this.ground(this.layers[0],'grass',-4096,-4096,11264,9984,0xa7ac8e);
     for(const [x,y,w,h] of [[-512,96,1600,1504],[1696,0,1632,1920],[864,1152,960,928]])

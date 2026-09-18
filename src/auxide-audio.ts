@@ -15,7 +15,8 @@ export class AuxideAudio {
   enabled = false;
   status: 'off' | 'loading' | 'on' | 'error' = 'off';
 
-  constructor(private read: () => PlaybackSnapshot | null) {}
+  private readonly read: () => PlaybackSnapshot | null;
+  constructor(read: () => PlaybackSnapshot | null) { this.read = read; }
 
   async enable() {
     if (this.status === 'loading' || this.enabled) return;

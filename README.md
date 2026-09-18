@@ -4,7 +4,7 @@ A local proof of concept for joshcazalas.com: a detached camera over an animated
 
 ## Run locally in WSL
 
-Requires the Node.js version in `.node-version`, Python 3, and either access to the private runtime asset pack or a local installation of Factorio with the base-game graphics.
+Requires the Node.js version in `.node-version` and either access to the private runtime asset pack or a local installation of Factorio with the base-game graphics.
 
 ```bash
 npm ci
@@ -134,7 +134,7 @@ This is an authored visual scene, not a Factorio simulation. Items loop through 
 - `src/main-menu.ts` and `src/main-menu.css`: title menu, guarded loading transition, and startup errors.
 - `src/menu-backdrop.ts`: three independently timed, rotating title-screen factory scenes.
 - `src/main.ts` and `src/style.css`: interface, minimap, accessible content, and scene setup.
-- `scripts/import-assets.mjs`: imports and packs selected frames from the installed game.
+- `scripts/import-assets.ts`: imports and packs selected frames from the installed game.
 
 ## Checkpoints
 
@@ -166,8 +166,13 @@ npx playwright install chromium
 npm run test:production
 ```
 
+Scripts run directly as TypeScript on Node 24; `npm run check` checks both scripts
+and application code in strict mode without emitting JavaScript.
+
 `test:production` starts a temporary preview server and runs all browser suites
-against the production build. The build includes only the locked runtime assets
+against the production build. Pass suite names to select a subset, for example
+`npm run test:production -- menu caz`. CI runs all five suites in parallel against
+one shared build. The build includes only the locked runtime assets
 and custom nameplate. The following individual checks instead use the running dev
 server by default (or `TEST_URL` when set):
 
