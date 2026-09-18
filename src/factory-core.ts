@@ -62,6 +62,15 @@ export class FactoryCore {
     this.build();
   }
 
+  /** Outposts reuse the loaded atlas frames without loading or duplicating textures. */
+  useAssets(source: FactoryCore) {
+    this.textures = source.textures;
+    this.packedScale = source.packedScale;
+    this.beltFrames = source.beltFrames;
+    this.root.addChild(...this.layers);
+    this.build();
+  }
+
   protected build() {}
 
   protected group(x: number, y: number, w: number, h: number) {

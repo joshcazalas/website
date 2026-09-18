@@ -1,6 +1,15 @@
 import { Application } from 'pixi.js';
 import { Camera } from './camera';
 import { Factory, WORLD, PLAZA, type Destination } from './factory';
+import { FoundationOutpost } from './foundation-outpost';
+import { ProjectPanel, projectMarkup } from './project-panel';
+import { AuxideOutpost } from './auxide-outpost';
+import { AuxidePlayback, SERVERS } from './auxide-playback';
+import { AuxideAudio } from './auxide-audio';
+import { AuxidePanel, auxideMarkup } from './auxide-panel';
+import { CazOutpost } from './caz-outpost';
+import { CazPanel, cazMarkup } from './caz-panel';
+import { CazRelease } from './caz-release';
 import './style.css';
 
 const appElement = document.querySelector<HTMLDivElement>('#app')!;
@@ -10,7 +19,7 @@ appElement.innerHTML = `
   <header class="topbar">
     <button class="identity" data-go="home" aria-label="Return to Josh's nameplate"><span class="status-light"></span><span>JOSH CAZALAS<small>PERSONAL FACTORY</small></span></button>
     <div class="view-label"><span class="crosshair">⌖</span> REMOTE VIEW <span class="tag">NAUVIS</span></div>
-    <nav aria-label="Portfolio"><button id="about-open" class="panel-button">About & projects <span>↗</span></button></nav>
+    <nav aria-label="Portfolio"><button id="projects-open" class="panel-button" aria-haspopup="dialog">Projects <span>→</span></button><button id="about-open" class="panel-button">About <span>↗</span></button></nav>
   </header>
   <aside class="map-panel" aria-label="Factory overview">
     <div class="panel-heading"><span>Surface map</span><button class="mini-reset" data-go="overview" aria-label="Show entire factory">⛶</button></div>
@@ -27,6 +36,9 @@ appElement.innerHTML = `
       <button class="slot" data-go="factory" title="Production"><span class="slot-key">2</span><img src="/factorio/icons/electronic-circuit.png" alt=""/><span>Production</span></button>
       <button class="slot" data-go="power" title="Power grid"><span class="slot-key">3</span><img src="/factorio/icons/processing-unit.png" alt=""/><span>Power</span></button>
       <button class="slot" data-go="research" title="Research"><span class="slot-key">4</span><img src="/factorio/icons/chemical-science-pack.png" alt=""/><span>Research</span></button>
+      <button class="slot outpost-only" data-go="aws-foundation" title="Frame the AWS Foundation outpost"><img src="/factorio/icons/processing-unit.png" alt=""/><span>Build site</span></button>
+      <button class="slot outpost-only" data-go="auxide" title="Frame the Auxide outpost"><span class="speaker-icon" aria-hidden="true"></span><span>Auxide</span></button>
+      <button class="slot outpost-only" data-go="caz-nix" title="Frame the caz.nix homelab"><img src="/factorio/icons/iron-gear-wheel.png" alt=""/><span>caz.nix</span></button>
       <span class="slot-separator"></span>
       <button class="slot action" id="pause" aria-label="Pause factory animation" aria-pressed="false"><span class="pause-icon">Ⅱ</span><span>Pause</span></button>
     </div>
@@ -39,13 +51,16 @@ appElement.innerHTML = `
       <p class="intro">I build systems that help people build things.</p>
       <p>I'm a platform engineer specializing in data infrastructure. I like making complicated systems understandable, repeatable, and easier for other people to work with. Outside work, that usually means my homelab, a side project, or a very large Factorio factory.</p>
       <h2>A few things I've built</h2>
-      <a class="project" href="https://github.com/joshcazalas/aws-foundation" target="_blank" rel="noopener noreferrer"><img src="/factorio/icons/processing-unit.png" alt=""/><span><strong>AWS Foundation <b>↗</b></strong><small>A personal multi-account AWS foundation, defined in Terraform. Identity, delivery, policy, and isolated state.</small><em>TERRAFORM / AWS / GITHUB ACTIONS</em></span></a>
-      <a class="project" href="https://github.com/joshcazalas/auxide" target="_blank" rel="noopener noreferrer"><img src="/factorio/icons/electronic-circuit.png" alt=""/><span><strong>Auxide <b>↗</b></strong><small>A self-hosted Discord music bot with per-guild playback actors, durable state, and operational visibility.</small><em>RUST / TOKIO / NIX</em></span></a>
-      <a class="project" href="https://github.com/joshcazalas/caz.nix" target="_blank" rel="noopener noreferrer"><img src="/factorio/icons/iron-gear-wheel.png" alt=""/><span><strong>Declarative home infrastructure <b>↗</b></strong><small>My home server and development environment, with reproducible configuration, monitoring, backups, and rollback.</small><em>NIXOS / LINUX / OBSERVABILITY</em></span></a>
+      <a class="project" href="#aws-foundation"><img src="/factorio/icons/processing-unit.png" alt=""/><span><strong>AWS Foundation <b>→</b></strong><small>A personal multi-account AWS foundation. Identity, delivery, policy, and isolated state. Visit its construction outpost.</small><em>OPENTOFU / AWS / GITHUB ACTIONS</em></span></a>
+      <a class="project" href="#auxide"><span class="speaker-icon" aria-hidden="true"></span><span><strong>Auxide <b>→</b></strong><small>A self-hosted Discord music bot with independent playback actors, bounded queues, and operational visibility. Visit its music outpost.</small><em>RUST / TOKIO / NIX</em></span></a>
+      <a class="project" href="#caz-nix"><img src="/factorio/icons/iron-gear-wheel.png" alt=""/><span><strong>caz.nix <b>→</b></strong><small>My home server and development environment, with reproducible configuration, monitoring, backups, and rollback. Visit its homelab outpost.</small><em>NIXOS / LINUX / OBSERVABILITY</em></span></a>
       <div class="dossier-contact"><a href="mailto:joshuacazalas@gmail.com">Email me ↗</a><a href="https://github.com/joshcazalas" target="_blank" rel="noopener noreferrer">GitHub ↗</a><a href="https://www.linkedin.com/in/joshcazalas/" target="_blank" rel="noopener noreferrer">LinkedIn ↗</a></div>
       <p class="colophon">A personal experiment inspired by my favorite game. Factory artwork © Wube Software. Local proof of concept.</p>
     </div>
   </dialog>
+  ${projectMarkup}
+  ${auxideMarkup}
+  ${cazMarkup}
   <noscript>This factory needs JavaScript. Josh Cazalas — platform engineer in Austin. Email: joshuacazalas@gmail.com.</noscript>
 `;
 
@@ -53,6 +68,14 @@ const dossier = document.querySelector<HTMLDialogElement>('#dossier')!;
 document.querySelector('#about-open')!.addEventListener('click', () => dossier.showModal());
 document.querySelector('#about-close')!.addEventListener('click', () => dossier.close());
 dossier.addEventListener('click', (event) => { if (event.target === dossier) { const r = dossier.getBoundingClientRect(); if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) dossier.close(); } });
+const projects = document.querySelector<HTMLDialogElement>('#projects')!;
+document.querySelector('#projects-open')!.addEventListener('click', () => projects.showModal());
+document.querySelector('#projects-close')!.addEventListener('click', () => projects.close());
+projects.addEventListener('click', event => {
+  if (event.target !== projects) return;
+  const r = projects.getBoundingClientRect();
+  if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) projects.close();
+});
 
 async function start() {
   const app = new Application();
@@ -68,12 +91,66 @@ async function start() {
     document.querySelector('#load-percent')!.textContent = `${Math.round(fraction * 100)}%`;
   });
   app.stage.addChild(factory.root);
+  const outpost = new FoundationOutpost();
+  outpost.useAssets(factory);
+  app.stage.addChild(outpost.root);
+  const projectPanel = new ProjectPanel();
+  const auxide = new AuxideOutpost();
+  auxide.useAssets(factory);
+  app.stage.addChild(auxide.root);
+  const playback = new AuxidePlayback();
+  const auxidePanel = new AuxidePanel();
+  const caz = new CazOutpost();
+  caz.useAssets(factory);
+  app.stage.addChild(caz.root);
+  const release = new CazRelease();
+  const cazPanel = new CazPanel();
+  let selectedServer = 0;
   const camera = new Camera(canvas);
+  let destination: Destination = 'home';
   let paused = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let elapsed = 9;
   let animationClock = performance.now();
+  const currentClock = () => elapsed + (!paused && !document.hidden ? (performance.now()-animationClock)/1000 : 0);
+  const audio = new AuxideAudio(() => destination === 'auxide' && !paused && !document.hidden ? playback.snapshot(selectedServer,currentClock()) : null);
+  const updateMusicPanel = () => auxidePanel.update(playback.snapshots(currentClock()),selectedServer,paused,audio.state);
+  const isProject = (target: Destination) => target === 'aws-foundation' || target === 'auxide' || target === 'caz-nix';
+  const fromHash = (): Destination => location.hash === '#caz-nix' ? 'caz-nix' : location.hash === '#auxide' ? 'auxide' : location.hash === '#aws-foundation' ? 'aws-foundation' : 'home';
+  camera.onDestination = target => {
+    destination = target;
+    const project = isProject(target);
+    document.body.classList.toggle('project-view', project);
+    document.body.dataset.project = project ? target : '';
+    projectPanel.element.hidden = target !== 'aws-foundation';
+    auxidePanel.element.hidden = target !== 'auxide';
+    cazPanel.element.hidden = target !== 'caz-nix';
+    if (target === 'caz-nix') cazPanel.update(release.snapshot(currentClock()),paused);
+    if (target !== 'auxide') audio.disable();
+    else updateMusicPanel();
+    for (const panel of [projectPanel.element,auxidePanel.element,cazPanel.element]) if (panel.hidden && panel.contains(document.activeElement)) canvas.focus({ preventScroll: true });
+    document.title = target === 'caz-nix' ? 'caz.nix — Josh Cazalas' : target === 'auxide' ? 'Auxide — Josh Cazalas' : project ? 'AWS Foundation — Josh Cazalas' : 'Josh Cazalas — Personal Factory';
+    document.querySelector('.view-label .tag')!.textContent = target === 'caz-nix' ? 'OUTPOST 03' : target === 'auxide' ? 'OUTPOST 02' : project ? 'OUTPOST 01' : 'NAUVIS';
+    document.querySelectorAll('.slot[data-go]').forEach(slot => slot.classList.toggle('active', (slot as HTMLElement).dataset.go === target));
+    if (project && location.hash !== `#${target}`) history.pushState(null, '', `#${target}`);
+    else if (!project && isProject(fromHash())) history.pushState(null, '', location.pathname + location.search);
+  };
+  window.addEventListener('hashchange', () => camera.go(fromHash()));
+  document.querySelectorAll<HTMLAnchorElement>('a[href="#aws-foundation"],a[href="#auxide"],a[href="#caz-nix"]').forEach(link => link.addEventListener('click', event => {
+    event.preventDefault();
+    dossier.close(); projects.close();
+    const target = link.hash.slice(1) as 'auxide' | 'aws-foundation' | 'caz-nix';
+    camera.go(target);
+    document.querySelector<HTMLElement>(target === 'caz-nix' ? '#caz-title' : target === 'auxide' ? '#auxide-title' : '#foundation-title')!.focus({ preventScroll: true });
+  }));
+  camera.go(fromHash(), true);
+  window.addEventListener('resize', () => {
+    if (!isProject(destination)) return;
+    camera.width = innerWidth; camera.height = innerHeight;
+    camera.go(destination, true);
+  });
   // Hidden tabs resume where they left off; visible slow frames retain real time.
-  document.addEventListener('visibilitychange', () => { animationClock = performance.now(); });
+  document.addEventListener('visibilitychange', () => { animationClock = performance.now(); if (document.hidden) audio.disable(); });
+  window.addEventListener('pagehide', () => audio.disable());
   const pauseButton = document.querySelector<HTMLButtonElement>('#pause')!;
   const setPause = () => {
     animationClock = performance.now();
@@ -84,7 +161,42 @@ async function start() {
     document.querySelector('#factory-status')!.textContent = paused ? 'Factory paused' : 'Factory running';
   };
   setPause();
-  pauseButton.addEventListener('click', () => { paused = !paused; setPause(); });
+  const togglePause = () => { elapsed = currentClock(); paused = !paused; setPause(); if (paused) audio.silence(); };
+  pauseButton.addEventListener('click', togglePause);
+  auxidePanel.element.querySelectorAll<HTMLButtonElement>('[data-server]').forEach(button => button.addEventListener('click', () => {
+    selectedServer = Number(button.dataset.server); audio.silence(); updateMusicPanel();
+    auxidePanel.announce(`Selected Server 0${selectedServer+1}, ${SERVERS[selectedServer].name}.`);
+  }));
+  document.querySelector('#auxide-toggle')!.addEventListener('click', () => {
+    playback.toggle(selectedServer,currentClock()); audio.silence(); updateMusicPanel();
+    auxidePanel.announce(`Server 0${selectedServer+1} ${playback.snapshot(selectedServer,currentClock()).playing ? 'resumed' : 'paused'}. The other servers keep their own playback state.`);
+  });
+  document.querySelector('#auxide-skip')!.addEventListener('click', () => {
+    playback.skip(selectedServer,currentClock()); audio.silence(); updateMusicPanel();
+    auxidePanel.announce(`Server 0${selectedServer+1}: ${playback.snapshot(selectedServer,currentClock()).title}.`);
+  });
+  document.querySelector('#auxide-sound')!.addEventListener('click', async () => {
+    if (audio.enabled) audio.disable(); else { const enabling = audio.enable(); updateMusicPanel(); await enabling; }
+    updateMusicPanel();
+  });
+  document.querySelector('#deploy-foundation')!.addEventListener('click', () => {
+    outpost.deploy(elapsed, paused);
+    projectPanel.update(outpost.state, paused);
+  });
+  document.querySelector('#finish-deployment')!.addEventListener('click', () => {
+    outpost.finish(elapsed);
+    projectPanel.update(outpost.state, paused);
+    document.querySelector<HTMLButtonElement>('#deploy-foundation')!.focus();
+  });
+  document.querySelector('#caz-deploy')!.addEventListener('click', () => {
+    release.start(currentClock(),document.querySelector<HTMLInputElement>('#caz-failure')!.checked,paused);
+    cazPanel.update(release.snapshot(currentClock()),paused);
+  });
+  document.querySelector('#caz-finish')!.addEventListener('click', () => {
+    release.finish(currentClock());
+    cazPanel.update(release.snapshot(currentClock()),paused);
+    document.querySelector<HTMLButtonElement>('#caz-deploy')!.focus();
+  });
   document.querySelector('#zoom-in')!.addEventListener('click', () => camera.zoomAt(1.4));
   document.querySelector('#zoom-out')!.addEventListener('click', () => camera.zoomAt(1 / 1.4));
   document.querySelectorAll<HTMLButtonElement>('[data-go]').forEach(button => button.addEventListener('click', () => {
@@ -92,10 +204,10 @@ async function start() {
     document.querySelectorAll('.slot[data-go]').forEach(slot => slot.classList.toggle('active', (slot as HTMLElement).dataset.go === button.dataset.go));
   }));
   window.addEventListener('keydown', event => {
-    if (dossier.open || event.target instanceof HTMLElement && event.target.closest('button,a,input')) return;
+    if (document.querySelector('dialog[open]') || event.target instanceof HTMLElement && event.target.closest('button,a,input,summary')) return;
     const destination = ['home', 'factory', 'power', 'research'][Number(event.key) - 1];
     if (destination) document.querySelector<HTMLButtonElement>(`.slot[data-go="${destination}"]`)?.click();
-    if (event.code === 'Space') { event.preventDefault(); paused = !paused; setPause(); }
+    if (event.code === 'Space') { event.preventDefault(); togglePause(); }
   });
   const links = factory.contacts.map(contact => {
     const link = document.createElement('a');
@@ -149,8 +261,18 @@ async function start() {
     if (!paused && !document.hidden) elapsed += animationDt;
     factory.root.scale.set(camera.zoom);
     factory.root.position.set(camera.width / 2 - camera.x * camera.zoom, camera.height / 2 - camera.y * camera.zoom);
+    outpost.root.scale.copyFrom(factory.root.scale);
+    outpost.root.position.copyFrom(factory.root.position);
+    auxide.root.scale.copyFrom(factory.root.scale);
+    auxide.root.position.copyFrom(factory.root.position);
+    caz.root.scale.copyFrom(factory.root.scale);
+    caz.root.position.copyFrom(factory.root.position);
     const view = camera.view();
-    factory.update(elapsed, view, camera.zoom);
+    factory.root.visible = view.left < 10752;
+    if (factory.root.visible) factory.update(elapsed, view, camera.zoom);
+    outpost.update(elapsed, view, camera.zoom);
+    auxide.render(elapsed,view,camera.zoom,playback.snapshots(elapsed),selectedServer);
+    caz.render(elapsed,view,camera.zoom,release.snapshot(elapsed));
     for (const link of links) {
       const x = (link.x - view.left) * camera.zoom, y = (link.y - view.top) * camera.zoom;
       link.element.style.transform = `translate(${x}px,${y}px)`;
@@ -166,11 +288,15 @@ async function start() {
       ctx.strokeRect(view.left * sx, view.top * sy, (view.right - view.left) * sx, (view.bottom - view.top) * sy);
       document.querySelector('#coordinates')!.textContent = `${Math.round(camera.x / 32)}, ${Math.round(camera.y / 32)}`;
       document.querySelector('#zoom-readout')!.textContent = `${Math.round(camera.zoom * 100)}%`;
+      if (destination === 'aws-foundation') projectPanel.update(outpost.state, paused);
+      if (destination === 'auxide') updateMusicPanel();
+      if (destination === 'caz-nix') cazPanel.update(release.snapshot(elapsed),paused);
     }
   });
   // Read-only instrumentation for checking rendering and navigation locally.
   Object.defineProperty(window, '__factory', { configurable: true, get: () => ({ ready: true, machines: factory.machineCount, belts: factory.beltCount, crossings: factory.crossingCount, railRoutes: factory.railRoutes.length,
-    camera: { x: camera.x, y: camera.y, zoom: camera.zoom }, paused, time: elapsed, fps: app.ticker.FPS, trains:factory.trainState }) });
+    camera: { x: camera.x, y: camera.y, zoom: camera.zoom }, paused, time: elapsed, fps: app.ticker.FPS, trains:factory.trainState,
+    destination, outpost: outpost.state, caz: { ...release.snapshot(elapsed), machines: caz.machineCount, belts: caz.beltCount, crossings: caz.crossingCount }, auxide: { selected: selectedServer, players: playback.snapshots(elapsed), audio: audio.state } }) });
 }
 
 start().catch(error => {

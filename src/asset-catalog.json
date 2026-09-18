@@ -1,4 +1,13 @@
 {
+  "speaker": { "file": "entity/programmable-speaker/programmable-speaker.png", "w": 59, "h": 178, "dx": -2.25, "dy": -39.5 },
+  "speakerShadow": { "file": "entity/programmable-speaker/programmable-speaker-shadow.png", "w": 237, "h": 50, "dx": 52.75, "dy": -3 },
+  "speakerIcon": { "file": "icons/programmable-speaker.png", "w": 64, "h": 64 },
+  "constant": { "file": "entity/combinator/constant-combinator.png", "w": 114, "h": 102, "dy": 5, "frames": 4, "cols": 4 },
+  "constantShadow": { "file": "entity/combinator/constant-combinator-shadow.png", "w": 98, "h": 66, "dx": 8.5, "dy": 5.5, "frames": 4, "cols": 4 },
+  "arithmetic": { "file": "entity/combinator/arithmetic-combinator.png", "w": 144, "h": 124, "dx": 0.5, "dy": 7.5, "frames": 4, "cols": 4 },
+  "arithmeticShadow": { "file": "entity/combinator/arithmetic-combinator-shadow.png", "w": 148, "h": 156, "dx": 13.5, "dy": 24.5, "frames": 4, "cols": 4 },
+  "lampLight": { "file": "entity/small-lamp/lamp-light.png", "w": 90, "h": 78, "dy": -7 },
+  "lampShadow": { "file": "entity/small-lamp/lamp-shadow.png", "w": 76, "h": 47, "dx": 3, "dy": 2 },
   "grass": {
     "file": "terrain/grass-1.png",
     "w": 512,

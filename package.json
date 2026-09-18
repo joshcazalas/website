@@ -10,7 +10,13 @@
     "build": "npm run check && vite build",
     "preview": "vite preview --host 127.0.0.1",
     "test:browser": "node scripts/browser-check.mjs",
-    "test:geometry": "node --experimental-strip-types scripts/paths.test.mjs"
+    "test:outpost": "node scripts/outpost-check.mjs",
+    "test:deployment": "node --experimental-strip-types scripts/foundation-deployment.test.mjs",
+    "test:playback": "node --experimental-strip-types scripts/auxide-playback.test.mjs",
+    "test:auxide": "node scripts/auxide-check.mjs",
+    "test:geometry": "node --experimental-strip-types scripts/paths.test.mjs",
+    "test:release": "node --experimental-strip-types scripts/caz-release.test.mjs",
+    "test:caz": "node scripts/caz-check.mjs"
   },
   "dependencies": {
     "pixi.js": "^8.13.2"

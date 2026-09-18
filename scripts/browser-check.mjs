@@ -76,6 +76,7 @@ try {
       await page.waitForTimeout(1100);
       await page.screenshot({path:`.local/screenshots/${destination}-desktop.png`});
     }
+    await page.close();
     const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
     mobile.on('pageerror', error => errors.push(error.message));
     await mobile.goto(process.env.TEST_URL || 'http://127.0.0.1:5173/');

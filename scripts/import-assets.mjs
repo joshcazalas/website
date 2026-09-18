@@ -65,9 +65,15 @@ for (const piece of pieces) {
 }
 await flush();
 await writeFile(join(destination, 'manifest.json'), JSON.stringify({ pages: page + 1, assets: manifest }));
+const samples = JSON.parse(await readFile(join(root, 'src/auxide-samples.json'), 'utf8'));
+const soundDirectory = 'sound/programmable-speaker';
+await mkdir(join(root, 'public/factorio', soundDirectory), { recursive: true });
+for (const file of Object.values(samples)) {
+  await copyFile(join(installation, 'data/base', soundDirectory, file), join(root, 'public/factorio', soundDirectory, file));
+}
 await mkdir(join(root, 'public/factorio/fonts'), { recursive: true });
 for (const font of ['NotoSans-Regular.ttf', 'NotoSans-Bold.ttf', 'NotoMono-Regular.ttf']) {
   await copyFile(join(installation, 'data/core/fonts', font), join(root, 'public/factorio/fonts', font));
 }
-console.log(`Imported ${Object.keys(catalog).length} sprite definitions into ${page + 1} texture atlases, plus 3 fonts.`);
+console.log(`Imported ${Object.keys(catalog).length} sprite definitions into ${page + 1} texture atlases, plus 3 fonts and ${Object.keys(samples).length} instrument samples.`);
 console.log('Assets stay in the gitignored public/factorio directory. This is a local proof of concept.');
