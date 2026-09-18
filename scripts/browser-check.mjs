@@ -1,3 +1,4 @@
+import { enterFactory } from './browser-helpers.mjs';
 import { chromium } from '@playwright/test';
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
@@ -12,7 +13,7 @@ try {
   page.on('pageerror', error => errors.push(error.message));
   page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
   await page.goto(process.env.TEST_URL || 'http://127.0.0.1:5173/');
-  await page.waitForFunction(() => window.__factory?.ready, null, { timeout: 60000 });
+  await enterFactory(page);
   await page.waitForTimeout(1600);
   await page.screenshot({ path: process.env.MOBILE_ONLY ? '.local/screenshots/home-mobile.png' : '.local/screenshots/home-desktop.png' });
   console.log('Factory loaded:', await page.evaluate(() => {const {trains,...state}=window.__factory;return {...state,trains:trains.length};}));
@@ -80,7 +81,7 @@ try {
     const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
     mobile.on('pageerror', error => errors.push(error.message));
     await mobile.goto(process.env.TEST_URL || 'http://127.0.0.1:5173/');
-    await mobile.waitForFunction(() => window.__factory?.ready, null, { timeout: 60000 });
+    await enterFactory(mobile);
     await mobile.waitForTimeout(700);
     assert(await mobile.evaluate(() => window.__factory.paused), 'Reduced motion must start paused');
     const parked=await mobile.evaluate(()=>window.__factory.trains);

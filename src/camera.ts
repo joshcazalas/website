@@ -2,6 +2,7 @@ import { WORLD, destinations, type Destination, type View } from './factory';
 import { FOUNDATION_SITE, AUXIDE_SITE, CAZ_SITE, SURFACE_BOUNDS } from './outpost-location';
 
 export class Camera {
+  enabled = true;
   x = 3840;
   y = 1600;
   zoom = 0.4;
@@ -56,6 +57,7 @@ export class Camera {
       this.zoomAt(Math.exp(-event.deltaY * 0.0015), event.clientX, event.clientY);
     }, { passive: false });
     const keyDown = (event: KeyboardEvent) => {
+      if (!this.enabled) return;
       if (document.querySelector('dialog[open]') || (event.target instanceof HTMLElement && event.target.closest('button,a,input,summary'))) return;
       const key = event.key.toLowerCase();
       if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd'].includes(key)) {

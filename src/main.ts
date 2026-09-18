@@ -10,10 +10,15 @@ import { AuxidePanel, auxideMarkup } from './auxide-panel';
 import { CazOutpost } from './caz-outpost';
 import { CazPanel, cazMarkup } from './caz-panel';
 import { CazRelease } from './caz-release';
+import { MenuBackdrop } from './menu-backdrop';
+import { MainMenu, mainMenuMarkup } from './main-menu';
 import './style.css';
+import './main-menu.css';
 
 const appElement = document.querySelector<HTMLDivElement>('#app')!;
 appElement.innerHTML = `
+  ${mainMenuMarkup}
+  <div id="factory-shell" inert hidden>
   <main id="map" aria-label="Josh Cazalas's factory"><h1 class="sr-only">Josh Cazalas — platform engineer and systems builder in Austin, Texas.</h1></main>
   <div id="world-links" aria-label="Contact Josh"></div>
   <header class="topbar">
@@ -44,7 +49,6 @@ appElement.innerHTML = `
     </div>
     <div class="factory-status"><span class="status-light"></span><span id="factory-status">Factory running</span><span class="status-secondary">There is always more to build.</span></div>
   </footer>
-  <section id="loading" role="status" aria-live="polite"><div class="loading-box"><span class="eyebrow">JOSHCAZALAS.COM</span><h1>Bringing the factory online.</h1><p>Connecting belts, machines, and a few things about me.</p><div class="progress"><div id="progress-fill"></div></div><span id="load-percent">0%</span></div></section>
   <dialog id="dossier" aria-labelledby="dossier-title">
     <div class="dialog-title"><span>Engineer dossier</span><button id="about-close" aria-label="Close about and projects">×</button></div>
     <div class="dossier-body"><div class="eyebrow">AUSTIN, TEXAS / PLATFORM ENGINEERING</div><h1 id="dossier-title">Hi, I'm Josh.</h1>
@@ -61,9 +65,11 @@ appElement.innerHTML = `
   ${projectMarkup}
   ${auxideMarkup}
   ${cazMarkup}
+  </div>
   <noscript>This factory needs JavaScript. Josh Cazalas — platform engineer in Austin. Email: joshuacazalas@gmail.com.</noscript>
 `;
 
+const mainMenu = new MainMenu();
 const dossier = document.querySelector<HTMLDialogElement>('#dossier')!;
 document.querySelector('#about-open')!.addEventListener('click', () => dossier.showModal());
 document.querySelector('#about-close')!.addEventListener('click', () => dossier.close());
@@ -80,17 +86,18 @@ projects.addEventListener('click', event => {
 async function start() {
   const app = new Application();
   await app.init({ resizeTo: window, background: 0x3e4733, resolution: Math.min(devicePixelRatio, 2), autoDensity: true, antialias: false, preference: 'webgl' });
+  app.ticker.autoStart = false;
+  app.stop();
   const canvas = app.canvas as HTMLCanvasElement;
   canvas.id = 'factory-canvas';
-  canvas.tabIndex = 0;
+  canvas.tabIndex = -1;
   canvas.setAttribute('aria-label', 'Factory map. Drag to pan, scroll to zoom, use arrow keys or WASD to move, H for home, M for overview.');
-  document.querySelector('#map')!.appendChild(canvas);
+  document.querySelector('#menu-backdrop')!.appendChild(canvas);
   const factory = new Factory();
-  await factory.load((fraction) => {
-    document.querySelector<HTMLElement>('#progress-fill')!.style.width = `${Math.round(fraction * 100)}%`;
-    document.querySelector('#load-percent')!.textContent = `${Math.round(fraction * 100)}%`;
-  });
+  await factory.load(fraction => mainMenu.progress(fraction));
   app.stage.addChild(factory.root);
+  const menuBackdrop = new MenuBackdrop(factory);
+  app.stage.addChild(menuBackdrop.root);
   const outpost = new FoundationOutpost();
   outpost.useAssets(factory);
   app.stage.addChild(outpost.root);
@@ -107,11 +114,13 @@ async function start() {
   const cazPanel = new CazPanel();
   let selectedServer = 0;
   const camera = new Camera(canvas);
+  camera.enabled = false;
   let destination: Destination = 'home';
   let paused = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let elapsed = 9;
+  let menuElapsed = 0;
   let animationClock = performance.now();
-  const currentClock = () => elapsed + (!paused && !document.hidden ? (performance.now()-animationClock)/1000 : 0);
+  const currentClock = () => elapsed + (!paused && !document.hidden && mainMenu.entered ? (performance.now()-animationClock)/1000 : 0);
   const audio = new AuxideAudio(() => destination === 'auxide' && !paused && !document.hidden ? playback.snapshot(selectedServer,currentClock()) : null);
   const updateMusicPanel = () => auxidePanel.update(playback.snapshots(currentClock()),selectedServer,paused,audio.state);
   const isProject = (target: Destination) => target === 'aws-foundation' || target === 'auxide' || target === 'caz-nix';
@@ -204,6 +213,7 @@ async function start() {
     document.querySelectorAll('.slot[data-go]').forEach(slot => slot.classList.toggle('active', (slot as HTMLElement).dataset.go === button.dataset.go));
   }));
   window.addEventListener('keydown', event => {
+    if (!mainMenu.entered) return;
     if (document.querySelector('dialog[open]') || event.target instanceof HTMLElement && event.target.closest('button,a,input,summary')) return;
     const destination = ['home', 'factory', 'power', 'research'][Number(event.key) - 1];
     if (destination) document.querySelector<HTMLButtonElement>(`.slot[data-go="${destination}"]`)?.click();
@@ -249,14 +259,18 @@ async function start() {
     camera.tx = (event.clientX - rect.left) / rect.width * WORLD.width;
     camera.ty = (event.clientY - rect.top) / rect.height * WORLD.height;
   });
-  document.querySelector('#loading')!.classList.add('loaded');
-  setTimeout(() => document.querySelector('#loading')?.remove(), 650);
   let lastHud = 0;
   app.ticker.add(ticker => {
     const dt = Math.min(ticker.deltaMS / 1000, 0.06);
     const now=performance.now(), animationDt=(now-animationClock)/1000;
     animationClock=now;
     camera.width = app.screen.width; camera.height = app.screen.height;
+    if (!mainMenu.entered) {
+      for (const world of [factory,outpost,auxide,caz]) world.root.visible = false;
+      if (!paused && !document.hidden) menuElapsed += animationDt;
+      menuBackdrop.update(menuElapsed,app.screen.width,app.screen.height);
+      return;
+    }
     camera.update(dt);
     if (!paused && !document.hidden) elapsed += animationDt;
     factory.root.scale.set(camera.zoom);
@@ -294,14 +308,21 @@ async function start() {
     }
   });
   // Read-only instrumentation for checking rendering and navigation locally.
-  Object.defineProperty(window, '__factory', { configurable: true, get: () => ({ ready: true, machines: factory.machineCount, belts: factory.beltCount, crossings: factory.crossingCount, railRoutes: factory.railRoutes.length,
+  Object.defineProperty(window, '__factory', { configurable: true, get: () => ({ ready: true, entered: mainMenu.entered, entry: mainMenu.state, menu: menuBackdrop.state, machines: factory.machineCount, belts: factory.beltCount, crossings: factory.crossingCount, railRoutes: factory.railRoutes.length,
     camera: { x: camera.x, y: camera.y, zoom: camera.zoom }, paused, time: elapsed, fps: app.ticker.FPS, trains:factory.trainState,
     destination, outpost: outpost.state, caz: { ...release.snapshot(elapsed), machines: caz.machineCount, belts: caz.beltCount, crossings: caz.crossingCount }, auxide: { selected: selectedServer, players: playback.snapshots(elapsed), audio: audio.state } }) });
+  mainMenu.ready(() => {
+    animationClock = performance.now();
+    camera.enabled = true;
+    canvas.tabIndex = 0;
+    document.querySelector('#map')!.appendChild(canvas);
+    menuBackdrop.root.visible = false;
+    camera.go(fromHash(), true);
+  });
+  app.start();
 }
 
 start().catch(error => {
   console.error(error);
-  const loading = document.querySelector('#loading .loading-box');
-  if (loading) loading.innerHTML = `<span class="eyebrow">LOCAL FACTORY</span><h1>The factory needs its assets.</h1><p>Import sprites from your installed copy of Factorio, then reload this page.</p><code>npm run assets:import</code><p class="error-detail"></p>`;
-  document.querySelector('.error-detail')!.textContent = error instanceof Error ? error.message : String(error);
+  mainMenu.fail(error);
 });

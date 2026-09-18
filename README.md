@@ -26,9 +26,23 @@ For another installation:
 npm run assets:import -- "/path/to/Factorio"
 ```
 
-It imports 87 sprite definitions, three fonts, and nine programmable-speaker instrument samples into `public/factorio/`. The importer uses Sharp to crop the required animation frames and train orientations into three shared texture atlases. That directory, the local screenshots, and build output are gitignored. Game artwork and instrument samples belong to Wube Software. This prototype is for local exploration; no deployment is configured.
+It imports 87 sprite definitions, three fonts, the in-world Factorio logo, and nine programmable-speaker instrument samples into `public/factorio/`. The importer uses Sharp to crop the required animation frames and train orientations into three shared texture atlases. That directory, the local screenshots, and build output are gitignored. Game artwork and instrument samples belong to Wube Software. This prototype is for local exploration; no deployment is configured.
 
 After pulling changes to the sprite catalog or importer, rerun `npm run assets:import` before starting the site.
+
+## Main menu
+
+Opening the site shows a modern Factorio-style main menu with a single **Play** button. Three close-up factory scenes rotate behind it: a train yard with persistent looping trains, a research campus with moving science belts, and an active oil refinery. These are authored sprite scenes inspired by [Factorio's menu simulations](https://www.factorio.com/blog/post/fff-362), rendered with the local game assets. The menu uses the same WebGL canvas and atlases as the portfolio; the belt beds animate in these close views. The main factory's existing scenery caching is unchanged.
+
+Play opens a brief map-loading panel, then the identity plaza—or the requested outpost if the URL has a project hash. The transition waits for asset loading and scene construction. The portfolio clock starts only after entering; menu scenes use their own clock and stop updating once hidden. Reduced motion uses a still factory backdrop and a shorter transition. No audio autoplays. Keyboard Enter activates Play; the map controls become available after entry.
+
+For an existing checkout that already has its packed sprites, import just the menu logo with:
+
+```bash
+npm run assets:import -- --menu-only
+```
+
+The normal full import includes it too. The logo and other game artwork stay under the ignored `public/factorio/` directory.
 
 ## Controls
 
@@ -115,10 +129,16 @@ This is an authored visual scene, not a Factorio simulation. Items loop through 
 - `src/pixel-font.ts`: world-space tile lettering.
 - `src/pixel-ferris.ts`: the world-space Ferris tile mosaic on Auxide's nameplate.
 - `src/pixel-aws.ts`: the world-space AWS wordmark and smile on the foundation nameplate.
+- `src/main-menu.ts` and `src/main-menu.css`: title menu, guarded loading transition, and startup errors.
+- `src/menu-backdrop.ts`: three independently timed, rotating title-screen factory scenes.
 - `src/main.ts` and `src/style.css`: interface, minimap, accessible content, and scene setup.
 - `scripts/import-assets.mjs`: imports and packs selected frames from the installed game.
 
 ## Checkpoints
+
+The [`factory-main-menu-v1`](https://github.com/joshcazalas/website/tree/factory-main-menu-v1) tag preserves the animated title menu, Play/loading transition, main hub, and all three project outposts. Continue development on `feature/factorio-main-menu`.
+
+The [`factory-outposts-v1`](https://github.com/joshcazalas/website/tree/factory-outposts-v1) tag preserves the hub and all three project outposts before the main-menu work (commit `86d78e7`, pushed on `feature/aws-foundation-outpost`).
 
 The `factory-hub-v1` tag preserves the initial megabase hub with the concrete identity plaza and looping trains. To explore that version without changing the current branch:
 
@@ -142,6 +162,7 @@ npm run test:browser
 npm run test:outpost
 npm run test:auxide
 npm run test:caz
+npm run test:menu
 ```
 
 Run the dev server before the browser checks. Geometry checks cover belt turns, grid validation, closed rail seams, carriage continuity, station stops, speed, and train spacing. Browser checks follow persistent trains through a complete lap and check the animation clock, loading, pan/zoom, destinations, pause/resume, project-panel interaction, mobile layout, and reduced motion. Screenshots go to `.local/screenshots/`.
@@ -151,5 +172,7 @@ Deployment checks cover stage ordering, construction before power, and round-tri
 Playback checks cover server isolation, pause/resume, repeated skips, fractional-tempo boundaries, and available samples. The Auxide browser check covers server controls, opt-in audio and cancellation, cross-outpost navigation, direct links, mobile layout, and reduced motion.
 
 Release checks cover archival before activation, failure confirmation, recovery, quarantine, repeated generations and physical slots, overlapping-run protection, and equivalent skipped/reduced-motion outcomes. The caz.nix browser check covers complete healthy and failed runs, pause, project navigation, history, mobile controls, and reduced motion.
+
+Menu checks cover scene animation and rotation, separation from the portfolio clock, keyboard Play, the loading transition, deep links, mobile and reduced motion, delayed assets, startup failure, and retry. Existing browser checks enter through Play before exercising the factory.
 
 For a custom browser installation, set `BROWSER_EXECUTABLE_PATH`. For a different running server, set `TEST_URL`. The browser used during development was a temporary Chromium installation adapted to the libraries in this WSL/Nix environment; that temporary setup is not part of the app.

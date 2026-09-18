@@ -1,3 +1,4 @@
+import { enterFactory as ready } from './browser-helpers.mjs';
 import { chromium } from '@playwright/test';
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
@@ -11,7 +12,6 @@ const watch=page=>{
   page.on('pageerror',e=>errors.push(e.message));
   page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
 };
-const ready=page=>page.waitForFunction(()=>window.__factory?.ready,null,{timeout:60000});
 const read=page=>page.evaluate(()=>window.__factory.auxide);
 try {
   const page=await browser.newPage({viewport:{width:1600,height:1000}});watch(page);

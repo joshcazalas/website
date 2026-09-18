@@ -28,6 +28,7 @@ export class FactoryCore {
   railRoutes: Point[][] = [];
   mapBelts: Point[][] = [];
   protected layers = Array.from({ length: 8 }, () => new Container());
+  protected animateConveyors = false;
   private chunks = new Map<string, Block>();
   private animations: Animation[] = [];
   private belts: Belt[] = [];
@@ -85,7 +86,7 @@ export class FactoryCore {
       const container = new Container(); this.layers[layer].addChild(container);
       // Belts, track, shadows, and pipework are static scenery. Cache only these
       // spatial chunks; the items, machines, inserters, and trains remain live.
-      if(layer===1||layer===3)container.cacheAsTexture({resolution:1});
+      if((layer===1&&!this.animateConveyors)||layer===3)container.cacheAsTexture({resolution:1});
       block = { container, x: cx, y: cy, w: 768, h: 768 }; this.chunks.set(key, block);
     }
     return block.container;
@@ -187,6 +188,7 @@ export class FactoryCore {
       if (c.hidden) continue;
       const owner = this.chunk(1,c.x,c.y), frames = this.beltFrames[beltRow(c)];
       const sprite = new Sprite(frames[0]); sprite.anchor.set(0.5); sprite.position.set(c.x,c.y); owner.addChild(sprite);
+      if(this.animateConveyors)this.animations.push({sprite,frames,rate:32,phase:0,owner});
       this.beltCount++;
       this.occupied.set(`${c.x}:${c.y}`,c);
     }

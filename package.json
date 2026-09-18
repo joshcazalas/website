@@ -16,7 +16,8 @@
     "test:auxide": "node scripts/auxide-check.mjs",
     "test:geometry": "node --experimental-strip-types scripts/paths.test.mjs",
     "test:release": "node --experimental-strip-types scripts/caz-release.test.mjs",
-    "test:caz": "node scripts/caz-check.mjs"
+    "test:caz": "node scripts/caz-check.mjs",
+    "test:menu": "node scripts/menu-check.mjs"
   },
   "dependencies": {
     "pixi.js": "^8.13.2"
