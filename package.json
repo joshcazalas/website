@@ -1,0 +1,24 @@
+{
+  "name": "joshcazalas-factory",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "assets:import": "node scripts/import-assets.mjs",
+    "check": "tsc --noEmit",
+    "build": "npm run check && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test:browser": "node scripts/browser-check.mjs",
+    "test:geometry": "node --experimental-strip-types scripts/paths.test.mjs"
+  },
+  "dependencies": {
+    "pixi.js": "^8.13.2"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "sharp": "^0.35.4",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.5"
+  }
+}

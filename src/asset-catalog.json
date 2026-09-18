@@ -1,0 +1,510 @@
+{
+  "grass": {
+    "file": "terrain/grass-1.png",
+    "w": 512,
+    "h": 256,
+    "y": 320
+  },
+  "dirt": {
+    "file": "terrain/dirt-3.png",
+    "w": 512,
+    "h": 256,
+    "y": 320
+  },
+  "concrete": {
+    "file": "terrain/concrete/concrete.png",
+    "w": 512,
+    "h": 512
+  },
+  "refined": {
+    "file": "terrain/concrete/refined-concrete.png",
+    "w": 512,
+    "h": 512
+  },
+  "belt": {
+    "file": "entity/express-transport-belt/express-transport-belt.png",
+    "w": 128,
+    "h": 128,
+    "frames": 32,
+    "cols": 32,
+    "rows": 20
+  },
+  "assembler": {
+    "file": "entity/assembling-machine-3/assembling-machine-3.png",
+    "w": 214,
+    "h": 237,
+    "frames": 32,
+    "cols": 8,
+    "dy": -0.75
+  },
+  "assemblerShadow": {
+    "file": "entity/assembling-machine-3/assembling-machine-3-shadow.png",
+    "w": 260,
+    "h": 162,
+    "frames": 32,
+    "cols": 8,
+    "dx": 28,
+    "dy": 4
+  },
+  "furnace": {
+    "file": "entity/electric-furnace/electric-furnace.png",
+    "w": 239,
+    "h": 219,
+    "dx": 0.75,
+    "dy": 5.75
+  },
+  "furnaceShadow": {
+    "file": "entity/electric-furnace/electric-furnace-shadow.png",
+    "w": 227,
+    "h": 171,
+    "dx": 11.25,
+    "dy": 7.75
+  },
+  "heater": {
+    "file": "entity/electric-furnace/electric-furnace-heater.png",
+    "w": 60,
+    "h": 56,
+    "frames": 12,
+    "cols": 12,
+    "dx": 1.75,
+    "dy": 32.75
+  },
+  "fan": {
+    "file": "entity/electric-furnace/electric-furnace-propeller-1.png",
+    "w": 37,
+    "h": 25,
+    "frames": 4,
+    "cols": 4,
+    "dx": -20.5,
+    "dy": -18.5
+  },
+  "lab": {
+    "file": "entity/lab/lab.png",
+    "w": 194,
+    "h": 174,
+    "frames": 33,
+    "cols": 11,
+    "dy": 1.5
+  },
+  "labBase": {
+    "file": "entity/lab/lab-integration.png",
+    "w": 242,
+    "h": 162,
+    "dy": 15.5
+  },
+  "labShadow": {
+    "file": "entity/lab/lab-shadow.png",
+    "w": 242,
+    "h": 136,
+    "dx": 13,
+    "dy": 11
+  },
+  "labLight": {
+    "file": "entity/lab/lab-light.png",
+    "w": 216,
+    "h": 194,
+    "frames": 33,
+    "cols": 11
+  },
+  "solar": {
+    "file": "entity/solar-panel/solar-panel.png",
+    "w": 230,
+    "h": 224,
+    "dx": -3,
+    "dy": 3.5
+  },
+  "solarShadow": {
+    "file": "entity/solar-panel/solar-panel-shadow.png",
+    "w": 220,
+    "h": 180,
+    "dx": 9.5,
+    "dy": 6
+  },
+  "accumulator": {
+    "file": "entity/accumulator/accumulator.png",
+    "w": 130,
+    "h": 189,
+    "dy": -11
+  },
+  "accumulatorShadow": {
+    "file": "entity/accumulator/accumulator-shadow.png",
+    "w": 234,
+    "h": 106,
+    "dx": 29,
+    "dy": 6
+  },
+  "substation": {
+    "file": "entity/substation/substation.png",
+    "w": 138,
+    "h": 270,
+    "dy": -31
+  },
+  "substationShadow": {
+    "file": "entity/substation/substation-shadow.png",
+    "w": 370,
+    "h": 104,
+    "dx": 62,
+    "dy": 10
+  },
+  "radar": {
+    "file": "entity/radar/radar.png",
+    "w": 196,
+    "h": 254,
+    "frames": 64,
+    "cols": 8,
+    "dx": 1,
+    "dy": -16
+  },
+  "radarShadow": {
+    "file": "entity/radar/radar-shadow.png",
+    "w": 336,
+    "h": 170,
+    "frames": 64,
+    "cols": 8,
+    "dx": 39,
+    "dy": 6
+  },
+  "chemical": {
+    "file": "entity/chemical-plant/chemical-plant.png",
+    "w": 220,
+    "h": 292,
+    "frames": 24,
+    "cols": 12,
+    "dx": 0.5,
+    "dy": -9
+  },
+  "chemicalShadow": {
+    "file": "entity/chemical-plant/chemical-plant-shadow.png",
+    "w": 312,
+    "h": 222,
+    "dx": 27,
+    "dy": 6
+  },
+  "chemicalLiquid": {
+    "file": "entity/chemical-plant/chemical-plant-liquid-north.png",
+    "w": 66,
+    "h": 44,
+    "frames": 24,
+    "cols": 6,
+    "dx": 23,
+    "dy": 15
+  },
+  "inserter": {
+    "file": "entity/fast-inserter/fast-inserter-platform.png",
+    "w": 105,
+    "h": 79,
+    "dx": 1.5,
+    "dy": 6.5
+  },
+  "arm": {
+    "file": "entity/fast-inserter/fast-inserter-hand-base.png",
+    "w": 32,
+    "h": 136,
+    "scale": 0.25
+  },
+  "hand": {
+    "file": "entity/fast-inserter/fast-inserter-hand-closed.png",
+    "w": 72,
+    "h": 164,
+    "scale": 0.25
+  },
+  "lamp": {
+    "file": "entity/small-lamp/lamp.png",
+    "w": 83,
+    "h": 70
+  },
+  "pipe": {
+    "file": "entity/pipe/pipe-straight-horizontal.png",
+    "w": 128,
+    "h": 128
+  },
+  "railBed": {
+    "file": "entity/legacy-straight-rail/legacy-straight-rail-horizontal-stone-path-background.png",
+    "w": 32,
+    "h": 256,
+    "x": 48
+  },
+  "railStone": {
+    "file": "entity/legacy-straight-rail/legacy-straight-rail-horizontal-stone-path.png",
+    "w": 32,
+    "h": 256,
+    "x": 48
+  },
+  "railTies": {
+    "file": "entity/legacy-straight-rail/legacy-straight-rail-horizontal-ties.png",
+    "w": 32,
+    "h": 256,
+    "x": 48
+  },
+  "railMetal": {
+    "file": "entity/legacy-straight-rail/legacy-straight-rail-horizontal-metals.png",
+    "w": 32,
+    "h": 256,
+    "x": 48
+  },
+  "locomotive": {
+    "file": "entity/locomotive/locomotive-3.png",
+    "w": 474,
+    "h": 458,
+    "dy": -16,
+    "frames": 32,
+    "cols": 4,
+    "step": 8,
+    "train": true
+  },
+  "wagon": {
+    "file": "entity/cargo-wagon/cargo-wagon-3.png",
+    "w": 442,
+    "h": 408,
+    "dy": -25,
+    "frames": 16,
+    "cols": 4,
+    "step": 8,
+    "train": true
+  },
+  "iron": {
+    "file": "icons/iron-plate.png",
+    "w": 64,
+    "h": 64
+  },
+  "copper": {
+    "file": "icons/copper-plate.png",
+    "w": 64,
+    "h": 64
+  },
+  "gear": {
+    "file": "icons/iron-gear-wheel.png",
+    "w": 64,
+    "h": 64
+  },
+  "circuit": {
+    "file": "icons/electronic-circuit.png",
+    "w": 64,
+    "h": 64
+  },
+  "advanced": {
+    "file": "icons/advanced-circuit.png",
+    "w": 64,
+    "h": 64
+  },
+  "processor": {
+    "file": "icons/processing-unit.png",
+    "w": 64,
+    "h": 64
+  },
+  "redScience": {
+    "file": "icons/automation-science-pack.png",
+    "w": 64,
+    "h": 64
+  },
+  "greenScience": {
+    "file": "icons/logistic-science-pack.png",
+    "w": 64,
+    "h": 64
+  },
+  "blueScience": {
+    "file": "icons/chemical-science-pack.png",
+    "w": 64,
+    "h": 64
+  },
+  "underground": {
+    "file": "entity/express-underground-belt/express-underground-belt-structure.png",
+    "w": 192,
+    "h": 192,
+    "frames": 4,
+    "cols": 4,
+    "rows": 2
+  },
+  "splitter": {
+    "file": "entity/express-splitter/express-splitter-north.png",
+    "w": 160,
+    "h": 70,
+    "frames": 32,
+    "cols": 8,
+    "dx": 7
+  },
+  "splitterEast": {
+    "file": "entity/express-splitter/express-splitter-east.png",
+    "w": 90,
+    "h": 84,
+    "frames": 32,
+    "cols": 8,
+    "dx": 4,
+    "dy": 13
+  },
+  "splitterEastTop": {
+    "file": "entity/express-splitter/express-splitter-east-top_patch.png",
+    "w": 90,
+    "h": 104,
+    "frames": 32,
+    "cols": 8,
+    "dx": 4,
+    "dy": -20
+  },
+  "refinery": {
+    "file": "entity/oil-refinery/oil-refinery.png",
+    "w": 386,
+    "h": 430,
+    "dy": -7.5
+  },
+  "refineryShadow": {
+    "file": "entity/oil-refinery/oil-refinery-shadow.png",
+    "w": 674,
+    "h": 426,
+    "dx": 82.5,
+    "dy": 26.5
+  },
+  "refineryFire": {
+    "file": "entity/oil-refinery/oil-refinery-fire.png",
+    "w": 40,
+    "h": 81,
+    "frames": 60,
+    "cols": 10,
+    "dx": 34,
+    "dy": -79.25
+  },
+  "tank": {
+    "file": "entity/storage-tank/storage-tank.png",
+    "w": 219,
+    "h": 235,
+    "dx": -0.25,
+    "dy": -1.25
+  },
+  "tankShadow": {
+    "file": "entity/storage-tank/storage-tank-shadow.png",
+    "w": 291,
+    "h": 153,
+    "dx": 29.75,
+    "dy": 22.25
+  },
+  "roboport": {
+    "file": "entity/roboport/roboport-base.png",
+    "w": 228,
+    "h": 277,
+    "dx": 2,
+    "dy": -2.25
+  },
+  "roboportShadow": {
+    "file": "entity/roboport/roboport-shadow.png",
+    "w": 294,
+    "h": 201,
+    "dx": 28.5,
+    "dy": 9.25
+  },
+  "roboportPatch": {
+    "file": "entity/roboport/roboport-base-patch.png",
+    "w": 138,
+    "h": 100,
+    "dx": 1.5,
+    "dy": -5
+  },
+  "roboportLight": {
+    "file": "entity/roboport/roboport-base-animation.png",
+    "w": 83,
+    "h": 59,
+    "frames": 8,
+    "cols": 8,
+    "dx": -17.75,
+    "dy": -71.25
+  },
+  "robot": {
+    "file": "entity/construction-robot/construction-robot.png",
+    "w": 66,
+    "h": 76,
+    "frames": 16,
+    "cols": 16,
+    "y": 76,
+    "dy": -4.5
+  },
+  "pipeV": {
+    "file": "entity/pipe/pipe-straight-vertical.png",
+    "w": 128,
+    "h": 128
+  },
+  "pipeUR": {
+    "file": "entity/pipe/pipe-corner-up-right.png",
+    "w": 128,
+    "h": 128
+  },
+  "pipeUL": {
+    "file": "entity/pipe/pipe-corner-up-left.png",
+    "w": 128,
+    "h": 128
+  },
+  "pipeDR": {
+    "file": "entity/pipe/pipe-corner-down-right.png",
+    "w": 128,
+    "h": 128
+  },
+  "pipeDL": {
+    "file": "entity/pipe/pipe-corner-down-left.png",
+    "w": 128,
+    "h": 128
+  },
+  "pipeT": {
+    "file": "entity/pipe/pipe-t-up.png",
+    "w": 128,
+    "h": 128
+  },
+  "pipeCross": {
+    "file": "entity/pipe/pipe-cross.png",
+    "w": 128,
+    "h": 128
+  },
+  "chest": {
+    "file": "entity/logistic-chest/storage-chest.png",
+    "w": 66,
+    "h": 74,
+    "dy": -2
+  },
+  "coal": {
+    "file": "icons/coal.png",
+    "w": 64,
+    "h": 64
+  },
+  "ore": {
+    "file": "icons/iron-ore.png",
+    "w": 64,
+    "h": 64
+  },
+  "copperOre": {
+    "file": "icons/copper-ore.png",
+    "w": 64,
+    "h": 64
+  },
+  "steel": {
+    "file": "icons/steel-plate.png",
+    "w": 64,
+    "h": 64
+  },
+  "plastic": {
+    "file": "icons/plastic-bar.png",
+    "w": 64,
+    "h": 64
+  },
+  "sulfur": {
+    "file": "icons/sulfur.png",
+    "w": 64,
+    "h": 64
+  },
+  "battery": {
+    "file": "icons/battery.png",
+    "w": 64,
+    "h": 64
+  },
+  "purpleScience": {
+    "file": "icons/production-science-pack.png",
+    "w": 64,
+    "h": 64
+  },
+  "yellowScience": {
+    "file": "icons/utility-science-pack.png",
+    "w": 64,
+    "h": 64
+  },
+  "whiteScience": {
+    "file": "icons/space-science-pack.png",
+    "w": 64,
+    "h": 64
+  }
+}
