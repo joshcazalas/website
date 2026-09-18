@@ -5,6 +5,8 @@ public/resume.pdf
 .local/
 test-results/
 *.log
+__pycache__/
+public/.factorio-stage-*/
 
 # Local tools and planning notes
 .agents/

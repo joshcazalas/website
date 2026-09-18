@@ -1,0 +1,107 @@
+name: Validate site
+
+on:
+  workflow_call:
+    inputs:
+      package-release:
+        type: boolean
+        default: false
+    secrets:
+      ASSETS_READ_TOKEN:
+        required: false
+    outputs:
+      tag:
+        value: ${{ jobs.browser.outputs.tag }}
+
+permissions:
+  contents: read
+
+jobs:
+  source:
+    name: Source checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+      - run: npm ci
+      - run: npm run check
+      - run: npm run test:unit
+      - run: npm run test:packaging
+      - name: Install pinned security and workflow tools
+        run: python3 scripts/install-ci-tools.py
+      - name: Check workflow syntax and expressions
+        # GitHub supports queue:max; actionlint 1.7.12 does not yet recognize it.
+        # https://github.com/rhysd/actionlint/issues/657
+        run: .local/tools/actionlint -ignore 'unexpected key "queue" for "concurrency" section'
+      - name: Scan the entire Git history
+        run: .local/tools/gitleaks git --log-opts=--all --redact --no-banner .
+      - name: Scan tracked working files
+        run: |
+          mkdir -p .local/scan
+          git archive HEAD | tar -x -C .local/scan
+          .local/tools/gitleaks dir --redact --no-banner .local/scan
+
+  browser:
+    name: Production build and browser tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    outputs:
+      tag: ${{ steps.package.outputs.tag }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # A separate repository credential is scoped to asset retrieval, never to npm or browser tests.
+      # Fork pull requests receive no secret and intentionally cannot satisfy the browser gate.
+      - name: Fetch the pinned private asset pack
+        env:
+          GH_TOKEN: ${{ secrets.ASSETS_READ_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo 'ASSETS_READ_TOKEN is required. Fork contributions need a reviewed maintainer branch for the full browser checks.' >&2
+            exit 1
+          fi
+          python3 scripts/assets.py fetch
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: .node-version
+          package-manager-cache: false
+      - run: npm ci
+      - run: npm run build
+      - run: npx --no-install playwright install --with-deps chromium
+      - run: npm run test:production
+      - name: Package the exact tested build
+        id: package
+        if: inputs.package-release
+        run: npm run release:package
+      - name: Retain private candidate artifacts or approved public release artifacts
+        if: inputs.package-release && (github.event.repository.private || vars.RELEASES_ENABLED == 'true')
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: website-release-${{ github.sha }}
+          path: ${{ steps.package.outputs.directory }}/*
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+
+  validate:
+    name: All checks passed
+    if: always()
+    needs: [source, browser]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Require every check to succeed
+        env:
+          SOURCE_RESULT: ${{ needs.source.result }}
+          BROWSER_RESULT: ${{ needs.browser.result }}
+        run: |
+          test "$SOURCE_RESULT" = success
+          test "$BROWSER_RESULT" = success

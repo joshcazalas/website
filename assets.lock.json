@@ -1,0 +1,96 @@
+{
+  "archive": "factorio-runtime.tar.gz",
+  "factorio_version": "2.0.77",
+  "files": {
+    "fonts/NotoMono-Regular.ttf": {
+      "sha256": "41fd7ccc82375e2a1e47f0cc2c941c14d7c99ba2f57cf69c9f738d07fb257686",
+      "size": 107848
+    },
+    "fonts/NotoSans-Bold.ttf": {
+      "sha256": "7c15ac396d2ce6bc33a3b4efacdbd322c9e46376599a725c6f790d8036052cab",
+      "size": 455164
+    },
+    "fonts/NotoSans-Regular.ttf": {
+      "sha256": "6b04c8dd65af6b73eb4279472ed1580b29102d6496a377340e80a40cdb3b22c9",
+      "size": 455188
+    },
+    "icons/iron-gear-wheel.png": {
+      "sha256": "c7f4376b46f83f9c036fcaa0d9c5c18890225b4d0201d40728c3766cb8284853",
+      "size": 10010
+    },
+    "icons/iron-plate.png": {
+      "sha256": "54fa8178116cf144d50bf1898c70aa18b274a93d7e3606aa71bad278b771b584",
+      "size": 6178
+    },
+    "icons/processing-unit.png": {
+      "sha256": "34dc6140e26cec2c9ad70200dadef443305b4cc29e07ecfbe1f259e5cb3ccc5b",
+      "size": 9324
+    },
+    "icons/programmable-speaker.png": {
+      "sha256": "ea526bfbe76837e5a4cd27408f10832856dc646291a91b33e512beb6cf27396b",
+      "size": 10283
+    },
+    "packed/atlas-0.png": {
+      "sha256": "dcad4addcb4c702d6673da8f8ee5a11401a6de4b5f517d4ed2d387e453165646",
+      "size": 3517683
+    },
+    "packed/atlas-1.png": {
+      "sha256": "6138e0181f3592ca32fbf3d5a5ead26de45264251a290b9a24e13d787152fce6",
+      "size": 3935265
+    },
+    "packed/atlas-2.png": {
+      "sha256": "5de5db77651ef4d9639d7a9e8ef2d55ce40cf0f5f0d7b7cb0d91d218cf8b3146",
+      "size": 1887852
+    },
+    "packed/manifest.json": {
+      "sha256": "0a826c937fdef7a7a2add78f5aa713045cc482e5833361b463732d060415b50f",
+      "size": 57085
+    },
+    "sound/programmable-speaker/kit-01.ogg": {
+      "sha256": "da33ed1f4f697c6639767135683f5f29534707508aa4307e3173cb7f938715a9",
+      "size": 11175
+    },
+    "sound/programmable-speaker/kit-03.ogg": {
+      "sha256": "10b5f7d6a260aa5e22b74b171e5d1c251071ef5302d20dc05871d77931818aaf",
+      "size": 6485
+    },
+    "sound/programmable-speaker/kit-06.ogg": {
+      "sha256": "12b461f15ae473258e55a07db04c59023851a0ae81fc2d495e46132da09327e2",
+      "size": 7074
+    },
+    "sound/programmable-speaker/piano1-08.ogg": {
+      "sha256": "9f9d7791c3048fd9447ecff7df4cdaaadd88859a33d4c522dc7bdb15e205fb02",
+      "size": 14305
+    },
+    "sound/programmable-speaker/piano1-10.ogg": {
+      "sha256": "2038de871f958fad0febc5ab7dd46d0dc7098a009936150f1bae947968608687",
+      "size": 13789
+    },
+    "sound/programmable-speaker/piano1-12.ogg": {
+      "sha256": "8e3c98ed007491f5d58269d8b9937a975c6f4082330a7cb46c805ea788d22010",
+      "size": 13877
+    },
+    "sound/programmable-speaker/piano1-15.ogg": {
+      "sha256": "637d03c5c167bc6b0d2cc6a6a95bbb37c8629f56786aea0fbd250cc781f5596c",
+      "size": 12047
+    },
+    "sound/programmable-speaker/piano1-17.ogg": {
+      "sha256": "a2a3aa9e4544818019b6b081211a9df334c76ad155808af811e498505e894ac4",
+      "size": 11736
+    },
+    "sound/programmable-speaker/piano1-20.ogg": {
+      "sha256": "410791cd38a98cfe624b774488b7c7d195523d385c7ff9c775125232d4530a18",
+      "size": 12391
+    }
+  },
+  "inputs": {
+    "scripts/import-assets.mjs": "837bf74dbdd2061d2f6302eacf3b5a3bb87e7d50d46e53e39bdab170c2dc0513",
+    "src/asset-catalog.json": "677d2b72c85125e76775ec959b654e555a2afb99cd26e605fe0e33cd01f3b240",
+    "src/auxide-samples.json": "890f822eb41dce3572ec8bb6df159f6592c42677e670a86a410e892c11d57f28"
+  },
+  "repository": "joshcazalas/website-assets",
+  "schema": 1,
+  "sha256": "c115a022415e32813432c4617955dfa258a02fafcde9d6719591f93ee136a588",
+  "size": 9955756,
+  "tag": "factorio-2.0.77-v1"
+}

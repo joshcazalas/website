@@ -3,11 +3,20 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": "24.19.0"
+  },
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "assets:import": "node scripts/import-assets.mjs",
+    "assets:fetch": "python3 scripts/assets.py fetch",
+    "assets:verify": "python3 scripts/assets.py verify",
     "check": "tsc --noEmit",
-    "build": "npm run check && vite build",
+    "build": "npm run check && python3 scripts/prepare-public.py && vite build",
+    "test:unit": "npm run test:geometry && npm run test:deployment && npm run test:playback && npm run test:release",
+    "test:packaging": "python3 -m unittest discover -s scripts -p '*_test.py' -v",
+    "test:production": "node scripts/production-check.mjs",
+    "release:package": "python3 scripts/package-release.py",
     "preview": "vite preview --host 127.0.0.1",
     "test:browser": "node scripts/browser-check.mjs",
     "test:outpost": "node scripts/outpost-check.mjs",

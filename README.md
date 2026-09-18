@@ -4,13 +4,19 @@ A local proof of concept for joshcazalas.com: a detached camera over an animated
 
 ## Run locally in WSL
 
-Requires Node.js 22.12+ (Node 24 was used here) and a local installation of Factorio with the base-game graphics.
+Requires the Node.js version in `.node-version`, Python 3, and either access to the private runtime asset pack or a local installation of Factorio with the base-game graphics.
 
 ```bash
 npm ci
 npm run assets:import
 npm run dev
 ```
+
+With access to the private `website-assets` repository, use `npm run assets:fetch`
+instead of `assets:import` to retrieve the exact checksum-pinned runtime pack.
+See [CI and releases](docs/ci-and-releases.md) for credentials, validation, and
+release operations. The source repo remains private until explicitly approved
+for publication; the asset repository stays private independently.
 
 Open **http://localhost:5173** in your Windows browser. The Vite server binds to `127.0.0.1`. WSL's localhost forwarding normally makes it available from Windows.
 
@@ -132,7 +138,7 @@ This is an authored visual scene, not a Factorio simulation. Items loop through 
 
 ## Checkpoints
 
-The [`portfolio-polish-v1`](https://github.com/joshcazalas/website/tree/portfolio-polish-v1) tag preserves the personalized menu, direct profile links, project quickbar, clickable outpost repository links, and simplified About/outpost copy. Continue development on `feature/factorio-main-menu`.
+The [`portfolio-polish-v1`](https://github.com/joshcazalas/website/tree/portfolio-polish-v1) tag preserves the personalized menu, direct profile links, project quickbar, clickable outpost repository links, and simplified About/outpost copy.
 
 The [`factory-main-menu-v1`](https://github.com/joshcazalas/website/tree/factory-main-menu-v1) tag preserves the animated title menu, Play/loading transition, main hub, and all three project outposts.
 
@@ -144,7 +150,7 @@ The `factory-hub-v1` tag preserves the initial megabase hub with the concrete id
 git switch -c revisit-factory-hub factory-hub-v1
 ```
 
-Game artwork, generated atlases, local configuration, and planning notes are excluded from version control. A fresh checkout needs its own local Factorio installation and the asset import step above.
+Game artwork, generated atlases, local configuration, and planning notes are excluded from version control. A fresh checkout needs the pinned asset pack or its own local Factorio installation and the asset import step above.
 
 ## Checks
 
@@ -155,7 +161,17 @@ npm run test:deployment
 npm run test:playback
 npm run test:release
 npm run build
+npm run test:packaging
 npx playwright install chromium
+npm run test:production
+```
+
+`test:production` starts a temporary preview server and runs all browser suites
+against the production build. The build includes only the locked runtime assets
+and custom nameplate. The following individual checks instead use the running dev
+server by default (or `TEST_URL` when set):
+
+```bash
 npm run test:browser
 npm run test:outpost
 npm run test:auxide

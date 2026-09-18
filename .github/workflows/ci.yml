@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    uses: ./.github/workflows/validate.yml
+    secrets:
+      ASSETS_READ_TOKEN: ${{ secrets.ASSETS_READ_TOKEN }}
+
+  validate:
+    name: Validate
+    if: always()
+    needs: checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Require the complete validation workflow
+        env:
+          RESULT: ${{ needs.checks.result }}
+        run: test "$RESULT" = success
