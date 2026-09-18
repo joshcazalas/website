@@ -1,4 +1,5 @@
-import { chromium } from '@playwright/test';
+import { enterFactory } from './browser-helpers.ts';
+import { chromium, type Page } from '@playwright/test';
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 
@@ -6,13 +7,13 @@ await mkdir('.local/screenshots', { recursive: true });
 const browser = await chromium.launch({ headless: true,
   executablePath: process.env.BROWSER_EXECUTABLE_PATH || undefined,
   args: ['--no-sandbox', '--enable-unsafe-swiftshader', '--disable-dev-shm-usage'] });
-const errors = [];
+const errors: string[] = [];
 try {
   const page = await browser.newPage({ viewport: process.env.MOBILE_ONLY ? { width: 390, height: 844 } : { width: 1600, height: 1000 } });
   page.on('pageerror', error => errors.push(error.message));
   page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
   await page.goto(process.env.TEST_URL || 'http://127.0.0.1:5173/');
-  await page.waitForFunction(() => window.__factory?.ready, null, { timeout: 60000 });
+  await enterFactory(page);
   await page.waitForTimeout(1600);
   await page.screenshot({ path: process.env.MOBILE_ONLY ? '.local/screenshots/home-mobile.png' : '.local/screenshots/home-desktop.png' });
   console.log('Factory loaded:', await page.evaluate(() => {const {trains,...state}=window.__factory;return {...state,trains:trains.length};}));
@@ -25,8 +26,6 @@ try {
     assert(after.x < before.x - 200, 'Dragging must move the camera');
     await page.mouse.wheel(0, -450); await page.waitForTimeout(800);
     assert((await page.evaluate(() => window.__factory.camera.zoom)) > before.zoom, 'Wheel must zoom');
-    await page.locator('.slot[data-go="factory"]').click(); await page.waitForTimeout(1000);
-    await page.screenshot({ path: '.local/screenshots/production-desktop.png' });
     await page.locator('#pause').click();
     const time = await page.evaluate(() => window.__factory.time);
     await page.waitForTimeout(300);
@@ -71,15 +70,16 @@ try {
     assert(wrapped.has(start.trains[0].id),'Observe the lead train complete a lap');
     assert(Math.abs((previous.time-start.time)-(previous.wall-start.wall))<.6,'Slow rendering must not slow the animation clock');
     console.log('Passed: persistent trains, full-loop carriage continuity, cruising speed, and real-time animation.');
-    for(const destination of ['research','power']) {
+    for(const destination of ['aws-foundation','auxide','caz-nix']) {
       await page.locator(`.slot[data-go="${destination}"]`).click();
       await page.waitForTimeout(1100);
       await page.screenshot({path:`.local/screenshots/${destination}-desktop.png`});
     }
+    await page.close();
     const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' });
     mobile.on('pageerror', error => errors.push(error.message));
     await mobile.goto(process.env.TEST_URL || 'http://127.0.0.1:5173/');
-    await mobile.waitForFunction(() => window.__factory?.ready, null, { timeout: 60000 });
+    await enterFactory(mobile);
     await mobile.waitForTimeout(700);
     assert(await mobile.evaluate(() => window.__factory.paused), 'Reduced motion must start paused');
     const parked=await mobile.evaluate(()=>window.__factory.trains);

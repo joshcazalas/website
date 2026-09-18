@@ -2,6 +2,7 @@ import { Graphics } from 'pixi.js';
 import { FactoryCore } from './factory-core';
 import { buildLandscape } from './layout';
 import { pixelText, pixelWidth } from './pixel-font';
+import { FOUNDATION_SITE, AUXIDE_SITE, CAZ_SITE } from './outpost-location';
 export type { View } from './factory-core';
 
 export const WORLD = { width: 10496, height: 7424 };
@@ -11,7 +12,10 @@ export const destinations = {
   factory: { x: 3968, y: 2624, zoom: 0.65 },
   power: { x: 1440, y: 5984, zoom: 0.50 },
   research: { x: 6624, y: 3488, zoom: 0.60 },
-  overview: { x: WORLD.width / 2, y: WORLD.height / 2, zoom: 0.15 }
+  overview: { x: WORLD.width / 2, y: WORLD.height / 2, zoom: 0.15 },
+  'aws-foundation': { x: FOUNDATION_SITE.x + FOUNDATION_SITE.width / 2, y: FOUNDATION_SITE.y + FOUNDATION_SITE.height / 2, zoom: 0.3 },
+  'caz-nix': { x: CAZ_SITE.x + CAZ_SITE.width / 2, y: CAZ_SITE.y + CAZ_SITE.height / 2, zoom: 0.3 },
+  auxide: { x: AUXIDE_SITE.x + AUXIDE_SITE.width / 2, y: AUXIDE_SITE.y + AUXIDE_SITE.height / 2, zoom: 0.3 }
 };
 export type Destination = keyof typeof destinations;
 

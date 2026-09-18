@@ -1,6 +1,8 @@
 import { WORLD, destinations, type Destination, type View } from './factory';
+import { FOUNDATION_SITE, AUXIDE_SITE, CAZ_SITE, SURFACE_BOUNDS } from './outpost-location';
 
 export class Camera {
+  enabled = true;
   x = 3840;
   y = 1600;
   zoom = 0.4;
@@ -12,8 +14,10 @@ export class Camera {
   keys = new Set<string>();
   private pointers = new Map<number, { x: number; y: number }>();
   private pinchDistance = 0;
+  private minimumZoom = 0.09;
   private cleanup: (() => void)[] = [];
   onChange = () => {};
+  onDestination = (_destination: Destination) => {};
 
   constructor(private canvas: HTMLCanvasElement) {
     const listen = <K extends keyof HTMLElementEventMap>(type: K, fn: (event: HTMLElementEventMap[K]) => void, options?: AddEventListenerOptions) => {
@@ -53,7 +57,8 @@ export class Camera {
       this.zoomAt(Math.exp(-event.deltaY * 0.0015), event.clientX, event.clientY);
     }, { passive: false });
     const keyDown = (event: KeyboardEvent) => {
-      if (document.querySelector('dialog[open]') || (event.target instanceof HTMLElement && event.target.closest('button,a,input'))) return;
+      if (!this.enabled) return;
+      if (document.querySelector('dialog[open]') || (event.target instanceof HTMLElement && event.target.closest('button,a,input,summary'))) return;
       const key = event.key.toLowerCase();
       if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd'].includes(key)) {
         event.preventDefault();
@@ -85,7 +90,7 @@ export class Camera {
     this.onChange();
   }
   zoomAt(factor: number, sx = this.width / 2, sy = this.height / 2, immediate = false) {
-    const next = Math.max(0.09, Math.min(1.65, this.tz * factor));
+    const next = Math.max(this.minimumZoom, Math.min(1.65, this.tz * factor));
     this.tx += (sx - this.width / 2) * (1 / this.tz - 1 / next);
     this.ty += (sy - this.height / 2) * (1 / this.tz - 1 / next);
     this.tz = next;
@@ -94,10 +99,32 @@ export class Camera {
     this.onChange();
   }
   go(destination: Destination, immediate = false) {
+    this.minimumZoom = destination === 'caz-nix' ? 0.06 : 0.09;
     const target = destinations[destination];
     this.tx = target.x;
     this.ty = target.y;
-    if (destination === 'home') {
+    if (destination === 'auxide' || destination === 'caz-nix') {
+      const site = destination === 'caz-nix' ? CAZ_SITE : AUXIDE_SITE;
+      if (this.width <= 800) {
+        this.tz = Math.max(this.minimumZoom, Math.min((this.width - 20) / site.width, (this.height - 430) / site.height, 0.4));
+        this.tx = site.x + site.width / 2;
+        this.ty = site.y + site.height / 2 + 155 / this.tz;
+      } else {
+        this.tz = Math.max(0.09, Math.min((this.width - 440) / site.width, (this.height - 230) / site.height, 0.5));
+        this.tx += 194 / this.tz;
+        this.ty += 12 / this.tz;
+      }
+    } else if (destination === 'aws-foundation') {
+      if (this.width <= 800) {
+        this.tz = Math.max(0.09, Math.min((this.width - 32) / 1960, (this.height - 410) / 2200, 0.4));
+        this.tx = FOUNDATION_SITE.x + 3360;
+        this.ty = FOUNDATION_SITE.y + 1512 + 128 / this.tz;
+      } else {
+        this.tz = Math.max(0.09, Math.min((this.width - 440) / FOUNDATION_SITE.width, (this.height - 230) / FOUNDATION_SITE.height, 0.5));
+        this.tx += 194 / this.tz;
+        this.ty += 12 / this.tz;
+      }
+    } else if (destination === 'home') {
       if (this.width < 650) {
         this.tz = this.width / 3000;
         this.ty = 608 + (this.height / 2 - 90) / this.tz;
@@ -107,13 +134,14 @@ export class Camera {
       }
     } else if (destination === 'overview') this.tz = Math.min((this.width - 60) / WORLD.width, (this.height - 160) / WORLD.height);
     else this.tz = Math.min(target.zoom, this.width / 1700);
-    this.tz = Math.max(0.09, this.tz);
+    this.tz = Math.max(this.minimumZoom, this.tz);
     if (immediate || matchMedia('(prefers-reduced-motion: reduce)').matches) { this.x = this.tx; this.y = this.ty; this.zoom = this.tz; }
     this.onChange();
+    this.onDestination(destination);
   }
   private clamp() {
-    this.tx = Math.max(0, Math.min(WORLD.width, this.tx));
-    this.ty = Math.max(0, Math.min(WORLD.height, this.ty));
+    this.tx = Math.max(0, Math.min(SURFACE_BOUNDS.width, this.tx));
+    this.ty = Math.max(0, Math.min(SURFACE_BOUNDS.height, this.ty));
   }
   update(dt: number) {
     const k = this.keys, speed = dt * 620 / this.zoom;

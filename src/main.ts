@@ -1,16 +1,30 @@
+import type { FactoryDebugState } from './factory-debug';
 import { Application } from 'pixi.js';
 import { Camera } from './camera';
 import { Factory, WORLD, PLAZA, type Destination } from './factory';
+import { FoundationOutpost } from './foundation-outpost';
+import { ProjectPanel, projectMarkup } from './project-panel';
+import { AuxideOutpost } from './auxide-outpost';
+import { AuxidePlayback, SERVERS } from './auxide-playback';
+import { AuxideAudio } from './auxide-audio';
+import { AuxidePanel, auxideMarkup } from './auxide-panel';
+import { CazOutpost } from './caz-outpost';
+import { CazPanel, cazMarkup } from './caz-panel';
+import { CazRelease } from './caz-release';
+import { MenuBackdrop } from './menu-backdrop';
+import { MainMenu, mainMenuMarkup } from './main-menu';
 import './style.css';
+import './main-menu.css';
 
 const appElement = document.querySelector<HTMLDivElement>('#app')!;
 appElement.innerHTML = `
+  ${mainMenuMarkup}
+  <div id="factory-shell" inert hidden>
   <main id="map" aria-label="Josh Cazalas's factory"><h1 class="sr-only">Josh Cazalas — platform engineer and systems builder in Austin, Texas.</h1></main>
-  <div id="world-links" aria-label="Contact Josh"></div>
+  <div id="world-links" aria-label="Factory links"></div>
   <header class="topbar">
-    <button class="identity" data-go="home" aria-label="Return to Josh's nameplate"><span class="status-light"></span><span>JOSH CAZALAS<small>PERSONAL FACTORY</small></span></button>
-    <div class="view-label"><span class="crosshair">⌖</span> REMOTE VIEW <span class="tag">NAUVIS</span></div>
-    <nav aria-label="Portfolio"><button id="about-open" class="panel-button">About & projects <span>↗</span></button></nav>
+    <button class="identity" data-go="home" aria-label="Return to Josh's nameplate"><span class="status-light"></span><span>JOSH CAZALAS<small>PORTFOLIO</small></span></button>
+    <nav aria-label="Portfolio"><button id="about-open" class="panel-button">About <span>↗</span></button></nav>
   </header>
   <aside class="map-panel" aria-label="Factory overview">
     <div class="panel-heading"><span>Surface map</span><button class="mini-reset" data-go="overview" aria-label="Show entire factory">⛶</button></div>
@@ -23,32 +37,37 @@ appElement.innerHTML = `
   <footer class="bottom-hud">
     <div class="hint"><span class="mouse-icon"></span><span>Drag to explore<span class="hint-divider"> / </span>Scroll to zoom</span><span class="keyboard-hint"><kbd>W A S D</kbd> move <kbd>M</kbd> map</span></div>
     <div class="quickbar" role="navigation" aria-label="Factory locations">
-      <button class="slot active" data-go="home" title="Home (H)"><span class="slot-key">1</span><img src="/factorio/icons/iron-plate.png" alt=""/><span>Home</span></button>
-      <button class="slot" data-go="factory" title="Production"><span class="slot-key">2</span><img src="/factorio/icons/electronic-circuit.png" alt=""/><span>Production</span></button>
-      <button class="slot" data-go="power" title="Power grid"><span class="slot-key">3</span><img src="/factorio/icons/processing-unit.png" alt=""/><span>Power</span></button>
-      <button class="slot" data-go="research" title="Research"><span class="slot-key">4</span><img src="/factorio/icons/chemical-science-pack.png" alt=""/><span>Research</span></button>
+      <button class="slot active" data-go="home" title="Home (1 / H)"><span class="slot-key" aria-hidden="true">1</span><img src="/factorio/icons/iron-plate.png" alt=""/><span>Home</span></button>
+      <button class="slot" data-go="aws-foundation" title="AWS Foundation (2)"><span class="slot-key" aria-hidden="true">2</span><img src="/factorio/icons/processing-unit.png" alt=""/><span>AWS Foundation</span></button>
+      <button class="slot" data-go="auxide" title="Auxide (3)"><span class="slot-key" aria-hidden="true">3</span><span class="speaker-icon" aria-hidden="true"></span><span>Auxide</span></button>
+      <button class="slot" data-go="caz-nix" title="caz.nix (4)"><span class="slot-key" aria-hidden="true">4</span><img src="/factorio/icons/iron-gear-wheel.png" alt=""/><span>caz.nix</span></button>
       <span class="slot-separator"></span>
       <button class="slot action" id="pause" aria-label="Pause factory animation" aria-pressed="false"><span class="pause-icon">Ⅱ</span><span>Pause</span></button>
     </div>
     <div class="factory-status"><span class="status-light"></span><span id="factory-status">Factory running</span><span class="status-secondary">There is always more to build.</span></div>
   </footer>
-  <section id="loading" role="status" aria-live="polite"><div class="loading-box"><span class="eyebrow">JOSHCAZALAS.COM</span><h1>Bringing the factory online.</h1><p>Connecting belts, machines, and a few things about me.</p><div class="progress"><div id="progress-fill"></div></div><span id="load-percent">0%</span></div></section>
   <dialog id="dossier" aria-labelledby="dossier-title">
     <div class="dialog-title"><span>Engineer dossier</span><button id="about-close" aria-label="Close about and projects">×</button></div>
     <div class="dossier-body"><div class="eyebrow">AUSTIN, TEXAS / PLATFORM ENGINEERING</div><h1 id="dossier-title">Hi, I'm Josh.</h1>
       <p class="intro">I build systems that help people build things.</p>
       <p>I'm a platform engineer specializing in data infrastructure. I like making complicated systems understandable, repeatable, and easier for other people to work with. Outside work, that usually means my homelab, a side project, or a very large Factorio factory.</p>
+      <p>Factorio is my favorite game. To me, it's software engineering in game form, and playing it has made me better at my job. I built this site because it seemed like a really fun way to show off some stuff I've built.</p>
       <h2>A few things I've built</h2>
-      <a class="project" href="https://github.com/joshcazalas/aws-foundation" target="_blank" rel="noopener noreferrer"><img src="/factorio/icons/processing-unit.png" alt=""/><span><strong>AWS Foundation <b>↗</b></strong><small>A personal multi-account AWS foundation, defined in Terraform. Identity, delivery, policy, and isolated state.</small><em>TERRAFORM / AWS / GITHUB ACTIONS</em></span></a>
-      <a class="project" href="https://github.com/joshcazalas/auxide" target="_blank" rel="noopener noreferrer"><img src="/factorio/icons/electronic-circuit.png" alt=""/><span><strong>Auxide <b>↗</b></strong><small>A self-hosted Discord music bot with per-guild playback actors, durable state, and operational visibility.</small><em>RUST / TOKIO / NIX</em></span></a>
-      <a class="project" href="https://github.com/joshcazalas/caz.nix" target="_blank" rel="noopener noreferrer"><img src="/factorio/icons/iron-gear-wheel.png" alt=""/><span><strong>Declarative home infrastructure <b>↗</b></strong><small>My home server and development environment, with reproducible configuration, monitoring, backups, and rollback.</small><em>NIXOS / LINUX / OBSERVABILITY</em></span></a>
+      <a class="project" href="#aws-foundation"><img src="/factorio/icons/processing-unit.png" alt=""/><span><strong>AWS Foundation <b>→</b></strong><small>My reusable setup for managing multiple AWS accounts with infrastructure as code.</small><em>OPENTOFU / AWS / GITHUB ACTIONS</em></span></a>
+      <a class="project" href="#auxide"><span class="speaker-icon" aria-hidden="true"></span><span><strong>Auxide <b>→</b></strong><small>My self-hosted Discord music bot, written in Rust.</small><em>RUST / TOKIO / NIX</em></span></a>
+      <a class="project" href="#caz-nix"><img src="/factorio/icons/iron-gear-wheel.png" alt=""/><span><strong>caz.nix <b>→</b></strong><small>The Nix configuration for my home server and WSL development environment.</small><em>NIXOS / LINUX / OBSERVABILITY</em></span></a>
       <div class="dossier-contact"><a href="mailto:joshuacazalas@gmail.com">Email me ↗</a><a href="https://github.com/joshcazalas" target="_blank" rel="noopener noreferrer">GitHub ↗</a><a href="https://www.linkedin.com/in/joshcazalas/" target="_blank" rel="noopener noreferrer">LinkedIn ↗</a></div>
-      <p class="colophon">A personal experiment inspired by my favorite game. Factory artwork © Wube Software. Local proof of concept.</p>
+      <p class="colophon">Factory artwork © Wube Software.</p>
     </div>
   </dialog>
+  ${projectMarkup}
+  ${auxideMarkup}
+  ${cazMarkup}
+  </div>
   <noscript>This factory needs JavaScript. Josh Cazalas — platform engineer in Austin. Email: joshuacazalas@gmail.com.</noscript>
 `;
 
+const mainMenu = new MainMenu();
 const dossier = document.querySelector<HTMLDialogElement>('#dossier')!;
 document.querySelector('#about-open')!.addEventListener('click', () => dossier.showModal());
 document.querySelector('#about-close')!.addEventListener('click', () => dossier.close());
@@ -57,23 +76,79 @@ dossier.addEventListener('click', (event) => { if (event.target === dossier) { c
 async function start() {
   const app = new Application();
   await app.init({ resizeTo: window, background: 0x3e4733, resolution: Math.min(devicePixelRatio, 2), autoDensity: true, antialias: false, preference: 'webgl' });
+  app.ticker.autoStart = false;
+  app.stop();
   const canvas = app.canvas as HTMLCanvasElement;
   canvas.id = 'factory-canvas';
-  canvas.tabIndex = 0;
+  canvas.tabIndex = -1;
   canvas.setAttribute('aria-label', 'Factory map. Drag to pan, scroll to zoom, use arrow keys or WASD to move, H for home, M for overview.');
-  document.querySelector('#map')!.appendChild(canvas);
+  document.querySelector('#menu-backdrop')!.appendChild(canvas);
   const factory = new Factory();
-  await factory.load((fraction) => {
-    document.querySelector<HTMLElement>('#progress-fill')!.style.width = `${Math.round(fraction * 100)}%`;
-    document.querySelector('#load-percent')!.textContent = `${Math.round(fraction * 100)}%`;
-  });
+  await factory.load(fraction => mainMenu.progress(fraction));
   app.stage.addChild(factory.root);
+  const menuBackdrop = new MenuBackdrop(factory);
+  app.stage.addChild(menuBackdrop.root);
+  const outpost = new FoundationOutpost();
+  outpost.useAssets(factory);
+  app.stage.addChild(outpost.root);
+  const projectPanel = new ProjectPanel();
+  const auxide = new AuxideOutpost();
+  auxide.useAssets(factory);
+  app.stage.addChild(auxide.root);
+  const playback = new AuxidePlayback();
+  const auxidePanel = new AuxidePanel();
+  const caz = new CazOutpost();
+  caz.useAssets(factory);
+  app.stage.addChild(caz.root);
+  const release = new CazRelease();
+  const cazPanel = new CazPanel();
+  let selectedServer = 0;
   const camera = new Camera(canvas);
+  camera.enabled = false;
+  let destination: Destination = 'home';
   let paused = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let elapsed = 9;
+  let menuElapsed = 0;
   let animationClock = performance.now();
+  const currentClock = () => elapsed + (!paused && !document.hidden && mainMenu.entered ? (performance.now()-animationClock)/1000 : 0);
+  const audio = new AuxideAudio(() => destination === 'auxide' && !paused && !document.hidden ? playback.snapshot(selectedServer,currentClock()) : null);
+  const updateMusicPanel = () => auxidePanel.update(playback.snapshots(currentClock()),selectedServer,paused,audio.state);
+  const isProject = (target: Destination) => target === 'aws-foundation' || target === 'auxide' || target === 'caz-nix';
+  const fromHash = (): Destination => location.hash === '#caz-nix' ? 'caz-nix' : location.hash === '#auxide' ? 'auxide' : location.hash === '#aws-foundation' ? 'aws-foundation' : 'home';
+  camera.onDestination = target => {
+    destination = target;
+    const project = isProject(target);
+    document.body.classList.toggle('project-view', project);
+    document.body.dataset.project = project ? target : '';
+    projectPanel.element.hidden = target !== 'aws-foundation';
+    auxidePanel.element.hidden = target !== 'auxide';
+    cazPanel.element.hidden = target !== 'caz-nix';
+    if (target === 'caz-nix') cazPanel.update(release.snapshot(currentClock()),paused);
+    if (target !== 'auxide') audio.disable();
+    else updateMusicPanel();
+    for (const panel of [projectPanel.element,auxidePanel.element,cazPanel.element]) if (panel.hidden && panel.contains(document.activeElement)) canvas.focus({ preventScroll: true });
+    document.title = target === 'caz-nix' ? 'caz.nix — Josh Cazalas' : target === 'auxide' ? 'Auxide — Josh Cazalas' : project ? 'AWS Foundation — Josh Cazalas' : 'Josh Cazalas — Portfolio';
+    document.querySelectorAll('.slot[data-go]').forEach(slot => slot.classList.toggle('active', (slot as HTMLElement).dataset.go === target));
+    if (project && location.hash !== `#${target}`) history.pushState(null, '', `#${target}`);
+    else if (!project && isProject(fromHash())) history.pushState(null, '', location.pathname + location.search);
+  };
+  window.addEventListener('hashchange', () => camera.go(fromHash()));
+  document.querySelectorAll<HTMLAnchorElement>('a[href="#aws-foundation"],a[href="#auxide"],a[href="#caz-nix"]').forEach(link => link.addEventListener('click', event => {
+    event.preventDefault();
+    dossier.close();
+    const target = link.hash.slice(1) as 'auxide' | 'aws-foundation' | 'caz-nix';
+    camera.go(target);
+    document.querySelector<HTMLElement>(target === 'caz-nix' ? '#caz-title' : target === 'auxide' ? '#auxide-title' : '#foundation-title')!.focus({ preventScroll: true });
+  }));
+  camera.go(fromHash(), true);
+  window.addEventListener('resize', () => {
+    if (!isProject(destination)) return;
+    camera.width = innerWidth; camera.height = innerHeight;
+    camera.go(destination, true);
+  });
   // Hidden tabs resume where they left off; visible slow frames retain real time.
-  document.addEventListener('visibilitychange', () => { animationClock = performance.now(); });
+  document.addEventListener('visibilitychange', () => { animationClock = performance.now(); if (document.hidden) audio.disable(); });
+  window.addEventListener('pagehide', () => audio.disable());
   const pauseButton = document.querySelector<HTMLButtonElement>('#pause')!;
   const setPause = () => {
     animationClock = performance.now();
@@ -84,7 +159,42 @@ async function start() {
     document.querySelector('#factory-status')!.textContent = paused ? 'Factory paused' : 'Factory running';
   };
   setPause();
-  pauseButton.addEventListener('click', () => { paused = !paused; setPause(); });
+  const togglePause = () => { elapsed = currentClock(); paused = !paused; setPause(); if (paused) audio.silence(); };
+  pauseButton.addEventListener('click', togglePause);
+  auxidePanel.element.querySelectorAll<HTMLButtonElement>('[data-server]').forEach(button => button.addEventListener('click', () => {
+    selectedServer = Number(button.dataset.server); audio.silence(); updateMusicPanel();
+    auxidePanel.announce(`Selected Server 0${selectedServer+1}, ${SERVERS[selectedServer].name}.`);
+  }));
+  document.querySelector('#auxide-toggle')!.addEventListener('click', () => {
+    playback.toggle(selectedServer,currentClock()); audio.silence(); updateMusicPanel();
+    auxidePanel.announce(`Server 0${selectedServer+1} ${playback.snapshot(selectedServer,currentClock()).playing ? 'resumed' : 'paused'}. The other servers keep their own playback state.`);
+  });
+  document.querySelector('#auxide-skip')!.addEventListener('click', () => {
+    playback.skip(selectedServer,currentClock()); audio.silence(); updateMusicPanel();
+    auxidePanel.announce(`Server 0${selectedServer+1}: ${playback.snapshot(selectedServer,currentClock()).title}.`);
+  });
+  document.querySelector('#auxide-sound')!.addEventListener('click', async () => {
+    if (audio.enabled) audio.disable(); else { const enabling = audio.enable(); updateMusicPanel(); await enabling; }
+    updateMusicPanel();
+  });
+  document.querySelector('#deploy-foundation')!.addEventListener('click', () => {
+    outpost.deploy(elapsed, paused);
+    projectPanel.update(outpost.state, paused);
+  });
+  document.querySelector('#finish-deployment')!.addEventListener('click', () => {
+    outpost.finish(elapsed);
+    projectPanel.update(outpost.state, paused);
+    document.querySelector<HTMLButtonElement>('#deploy-foundation')!.focus();
+  });
+  document.querySelector('#caz-deploy')!.addEventListener('click', () => {
+    release.start(currentClock(),document.querySelector<HTMLInputElement>('#caz-failure')!.checked,paused);
+    cazPanel.update(release.snapshot(currentClock()),paused);
+  });
+  document.querySelector('#caz-finish')!.addEventListener('click', () => {
+    release.finish(currentClock());
+    cazPanel.update(release.snapshot(currentClock()),paused);
+    document.querySelector<HTMLButtonElement>('#caz-deploy')!.focus();
+  });
   document.querySelector('#zoom-in')!.addEventListener('click', () => camera.zoomAt(1.4));
   document.querySelector('#zoom-out')!.addEventListener('click', () => camera.zoomAt(1 / 1.4));
   document.querySelectorAll<HTMLButtonElement>('[data-go]').forEach(button => button.addEventListener('click', () => {
@@ -92,19 +202,27 @@ async function start() {
     document.querySelectorAll('.slot[data-go]').forEach(slot => slot.classList.toggle('active', (slot as HTMLElement).dataset.go === button.dataset.go));
   }));
   window.addEventListener('keydown', event => {
-    if (dossier.open || event.target instanceof HTMLElement && event.target.closest('button,a,input')) return;
-    const destination = ['home', 'factory', 'power', 'research'][Number(event.key) - 1];
+    if (!mainMenu.entered) return;
+    if (document.querySelector('dialog[open]') || event.target instanceof HTMLElement && event.target.closest('button,a,input,summary')) return;
+    const destination = ['home', 'aws-foundation', 'auxide', 'caz-nix'][Number(event.key) - 1];
     if (destination) document.querySelector<HTMLButtonElement>(`.slot[data-go="${destination}"]`)?.click();
-    if (event.code === 'Space') { event.preventDefault(); paused = !paused; setPause(); }
+    if (event.code === 'Space') { event.preventDefault(); togglePause(); }
   });
-  const links = factory.contacts.map(contact => {
+  const links = [
+    ...factory.contacts.map(contact => ({ ...contact, destination: 'home' as const })),
+    ...outpost.contacts.map(contact => ({ ...contact, destination: 'aws-foundation' as const })),
+    ...auxide.contacts.map(contact => ({ ...contact, destination: 'auxide' as const })),
+    ...caz.contacts.map(contact => ({ ...contact, destination: 'caz-nix' as const }))
+  ].map(contact => {
     const link = document.createElement('a');
     link.className = 'world-link';
     link.href = contact.href;
     link.setAttribute('aria-label', contact.label);
     link.title = contact.label;
     if (!contact.href.startsWith('mailto:')) { link.target = '_blank'; link.rel = 'noopener noreferrer'; }
-    link.addEventListener('focus', () => { if (link.matches(':focus-visible')) camera.go('home'); });
+    link.addEventListener('focus', () => {
+      if (link.matches(':focus-visible') && destination !== contact.destination) camera.go(contact.destination);
+    });
     document.querySelector('#world-links')!.appendChild(link);
     return { element: link, ...contact };
   });
@@ -137,20 +255,34 @@ async function start() {
     camera.tx = (event.clientX - rect.left) / rect.width * WORLD.width;
     camera.ty = (event.clientY - rect.top) / rect.height * WORLD.height;
   });
-  document.querySelector('#loading')!.classList.add('loaded');
-  setTimeout(() => document.querySelector('#loading')?.remove(), 650);
   let lastHud = 0;
   app.ticker.add(ticker => {
     const dt = Math.min(ticker.deltaMS / 1000, 0.06);
     const now=performance.now(), animationDt=(now-animationClock)/1000;
     animationClock=now;
     camera.width = app.screen.width; camera.height = app.screen.height;
+    if (!mainMenu.entered) {
+      for (const world of [factory,outpost,auxide,caz]) world.root.visible = false;
+      if (!paused && !document.hidden) menuElapsed += animationDt;
+      menuBackdrop.update(menuElapsed,app.screen.width,app.screen.height);
+      return;
+    }
     camera.update(dt);
     if (!paused && !document.hidden) elapsed += animationDt;
     factory.root.scale.set(camera.zoom);
     factory.root.position.set(camera.width / 2 - camera.x * camera.zoom, camera.height / 2 - camera.y * camera.zoom);
+    outpost.root.scale.copyFrom(factory.root.scale);
+    outpost.root.position.copyFrom(factory.root.position);
+    auxide.root.scale.copyFrom(factory.root.scale);
+    auxide.root.position.copyFrom(factory.root.position);
+    caz.root.scale.copyFrom(factory.root.scale);
+    caz.root.position.copyFrom(factory.root.position);
     const view = camera.view();
-    factory.update(elapsed, view, camera.zoom);
+    factory.root.visible = view.left < 10752;
+    if (factory.root.visible) factory.update(elapsed, view, camera.zoom);
+    outpost.update(elapsed, view, camera.zoom);
+    auxide.render(elapsed,view,camera.zoom,playback.snapshots(elapsed),selectedServer);
+    caz.render(elapsed,view,camera.zoom,release.snapshot(elapsed));
     for (const link of links) {
       const x = (link.x - view.left) * camera.zoom, y = (link.y - view.top) * camera.zoom;
       link.element.style.transform = `translate(${x}px,${y}px)`;
@@ -166,16 +298,27 @@ async function start() {
       ctx.strokeRect(view.left * sx, view.top * sy, (view.right - view.left) * sx, (view.bottom - view.top) * sy);
       document.querySelector('#coordinates')!.textContent = `${Math.round(camera.x / 32)}, ${Math.round(camera.y / 32)}`;
       document.querySelector('#zoom-readout')!.textContent = `${Math.round(camera.zoom * 100)}%`;
+      if (destination === 'aws-foundation') projectPanel.update(outpost.state, paused);
+      if (destination === 'auxide') updateMusicPanel();
+      if (destination === 'caz-nix') cazPanel.update(release.snapshot(elapsed),paused);
     }
   });
   // Read-only instrumentation for checking rendering and navigation locally.
-  Object.defineProperty(window, '__factory', { configurable: true, get: () => ({ ready: true, machines: factory.machineCount, belts: factory.beltCount, crossings: factory.crossingCount, railRoutes: factory.railRoutes.length,
-    camera: { x: camera.x, y: camera.y, zoom: camera.zoom }, paused, time: elapsed, fps: app.ticker.FPS, trains:factory.trainState }) });
+  Object.defineProperty(window, '__factory', { configurable: true, get: (): FactoryDebugState => ({ ready: true, entered: mainMenu.entered, entry: mainMenu.state, menu: menuBackdrop.state, machines: factory.machineCount, belts: factory.beltCount, crossings: factory.crossingCount, railRoutes: factory.railRoutes.length,
+    camera: { x: camera.x, y: camera.y, zoom: camera.zoom }, paused, time: elapsed, fps: app.ticker.FPS, trains:factory.trainState,
+    destination, outpost: outpost.state, caz: { ...release.snapshot(elapsed), machines: caz.machineCount, belts: caz.beltCount, crossings: caz.crossingCount }, auxide: { selected: selectedServer, players: playback.snapshots(elapsed), audio: audio.state } }) });
+  mainMenu.ready(() => {
+    animationClock = performance.now();
+    camera.enabled = true;
+    canvas.tabIndex = 0;
+    document.querySelector('#map')!.appendChild(canvas);
+    menuBackdrop.root.visible = false;
+    camera.go(fromHash(), true);
+  });
+  app.start();
 }
 
 start().catch(error => {
   console.error(error);
-  const loading = document.querySelector('#loading .loading-box');
-  if (loading) loading.innerHTML = `<span class="eyebrow">LOCAL FACTORY</span><h1>The factory needs its assets.</h1><p>Import sprites from your installed copy of Factorio, then reload this page.</p><code>npm run assets:import</code><p class="error-detail"></p>`;
-  document.querySelector('.error-detail')!.textContent = error instanceof Error ? error.message : String(error);
+  mainMenu.fail(error);
 });
