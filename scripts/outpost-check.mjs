@@ -13,21 +13,45 @@ const watch = page => {
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
 };
 const state = page => page.evaluate(() => window.__factory.outpost);
+const repoUrl = 'https://github.com/joshcazalas/aws-foundation';
+const mapRepo = `.world-link[href="${repoUrl}"]`;
+const checkRepoTab = async (page, activate) => {
+  // Verify the real anchor/new-tab behavior without loading the external site.
+  await page.context().route(repoUrl, route => route.fulfill({ contentType: 'text/html', body: '<title>Repository</title>' }));
+  const opened = page.waitForEvent('popup');
+  await activate();
+  const tab = await opened;
+  await tab.waitForURL(repoUrl);
+  await tab.close();
+  await page.bringToFront();
+  assert.equal(await page.evaluate(() => window.__factory.destination), 'aws-foundation');
+};
 
 try {
   const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } }); watch(page);
   await page.goto(base); await ready(page);
-  await page.locator('#projects-open').click();
-  assert(await page.locator('#projects').isVisible());
-  await page.locator('#projects a[href="#aws-foundation"]').click();
+  await page.locator('.slot[data-go="aws-foundation"]').click();
   await page.waitForTimeout(1000);
   assert.equal(new URL(page.url()).hash, '#aws-foundation');
-  assert(!(await page.locator('#projects').isVisible()));
   assert(await page.locator('#foundation-panel').isVisible());
   assert.equal((await state(page)).phase, 'ready');
   assert.equal((await state(page)).built, 0);
   assert.equal(await page.locator('#foundation-panel .source-link').getAttribute('href'), 'https://github.com/joshcazalas/aws-foundation');
   await page.screenshot({ path: '.local/screenshots/outpost-ready.png' });
+  const repo = page.locator(mapRepo);
+  assert(await repo.isVisible(), 'Pixel repository link is visible in the desktop outpost');
+  assert.equal(await repo.getAttribute('target'), '_blank');
+  const initialLink = await repo.boundingBox();
+  await page.mouse.move(600, 700);await page.mouse.down();await page.mouse.move(660, 735, { steps: 8 });await page.mouse.up();
+  await page.waitForTimeout(400);
+  const pannedLink = await repo.boundingBox();
+  assert(pannedLink.x > initialLink.x + 40, 'Repository link follows camera panning');
+  await page.mouse.move(450, 300);await page.mouse.wheel(0, -120);await page.waitForTimeout(900);
+  assert((await repo.boundingBox()).width > pannedLink.width * 1.1, 'Repository hit area scales with map zoom');
+  await repo.hover();await page.screenshot({ path: '.local/screenshots/outpost-repo-link.png' });
+  await checkRepoTab(page, () => repo.click());
+  await page.locator('#foundation-panel [data-go="aws-foundation"]').click();await page.waitForTimeout(900);
+  await repo.focus();await checkRepoTab(page, () => page.keyboard.press('Enter'));
 
   await page.locator('#deploy-foundation').click();
   await page.waitForFunction(() => window.__factory.outpost.phase === 'blueprint');
@@ -68,7 +92,7 @@ try {
   assert.equal((await state(page)).built, complete.total, 'Skip and natural completion produce the same build');
   await page.locator('#foundation-panel .project-details summary').click();
   assert(await page.locator('#foundation-panel .project-details').evaluate(e => e.open));
-  assert.match(await page.locator('#foundation-panel .project-details').innerText(), /manual applies/);
+  assert.match(await page.locator('#foundation-panel .project-details').innerText(), /infrastructure as code/);
 
   await page.goBack();
   await page.waitForFunction(() => window.__factory.destination === 'home');
@@ -80,7 +104,7 @@ try {
   await page.keyboard.press('h');
   await page.waitForFunction(() => window.__factory.destination === 'home');
   assert.equal(new URL(page.url()).hash, '');
-  console.log('Passed: directory, construction, pause, completed layout, replay, skip, readable content, history, and keyboard Home.');
+  console.log('Passed: quickbar, construction, pause, completed layout, replay, skip, readable content, history, and keyboard Home.');
 
   await page.close();
   const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' }); watch(mobile);
@@ -102,6 +126,14 @@ try {
     assert(bounds && bounds.x >= 0 && bounds.x + bounds.width <= 390 && bounds.y >= 0 && bounds.y + bounds.height <= 844, `${selector} must fit on mobile`);
   }
   await mobile.screenshot({ path: '.local/screenshots/outpost-mobile-online.png' });
+  // The mobile camera frames the construction site; pan west to its nameplate link.
+  for (let i = 0; i < 2; i++) {
+    await mobile.mouse.move(70, 180);await mobile.mouse.down();await mobile.mouse.move(320, 240, { steps: 8 });await mobile.mouse.up();
+  }
+  await mobile.waitForTimeout(300);
+  assert(await mobile.locator(mapRepo).isVisible());
+  await checkRepoTab(mobile, () => mobile.locator(mapRepo).tap());
+  await mobile.locator('#foundation-panel [data-go="aws-foundation"]').tap();
   await mobile.locator('#foundation-panel .project-details summary').tap();
   assert(await mobile.locator('#foundation-panel .project-details').evaluate(e => e.open));
   await mobile.locator('#foundation-panel .source-link').scrollIntoViewIfNeeded();
@@ -110,5 +142,5 @@ try {
   await mobile.waitForFunction(() => window.__factory.destination === 'home');
   assert(!(await mobile.locator('#foundation-panel').isVisible()));
   assert.deepEqual(errors, [], 'No rendering, asset loading, or browser errors');
-  console.log('Passed: deep link, mobile layout, readable details, reduced motion, immediate completion, and return home.');
+  console.log('Passed: deep link, mobile layout, pixel GitHub link with pan/zoom and keyboard/touch activation, readable details, reduced motion, immediate completion, and return home.');
 } finally { await browser.close(); }

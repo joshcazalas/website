@@ -20,11 +20,10 @@ appElement.innerHTML = `
   ${mainMenuMarkup}
   <div id="factory-shell" inert hidden>
   <main id="map" aria-label="Josh Cazalas's factory"><h1 class="sr-only">Josh Cazalas — platform engineer and systems builder in Austin, Texas.</h1></main>
-  <div id="world-links" aria-label="Contact Josh"></div>
+  <div id="world-links" aria-label="Factory links"></div>
   <header class="topbar">
-    <button class="identity" data-go="home" aria-label="Return to Josh's nameplate"><span class="status-light"></span><span>JOSH CAZALAS<small>PERSONAL FACTORY</small></span></button>
-    <div class="view-label"><span class="crosshair">⌖</span> REMOTE VIEW <span class="tag">NAUVIS</span></div>
-    <nav aria-label="Portfolio"><button id="projects-open" class="panel-button" aria-haspopup="dialog">Projects <span>→</span></button><button id="about-open" class="panel-button">About <span>↗</span></button></nav>
+    <button class="identity" data-go="home" aria-label="Return to Josh's nameplate"><span class="status-light"></span><span>JOSH CAZALAS<small>PORTFOLIO</small></span></button>
+    <nav aria-label="Portfolio"><button id="about-open" class="panel-button">About <span>↗</span></button></nav>
   </header>
   <aside class="map-panel" aria-label="Factory overview">
     <div class="panel-heading"><span>Surface map</span><button class="mini-reset" data-go="overview" aria-label="Show entire factory">⛶</button></div>
@@ -37,13 +36,10 @@ appElement.innerHTML = `
   <footer class="bottom-hud">
     <div class="hint"><span class="mouse-icon"></span><span>Drag to explore<span class="hint-divider"> / </span>Scroll to zoom</span><span class="keyboard-hint"><kbd>W A S D</kbd> move <kbd>M</kbd> map</span></div>
     <div class="quickbar" role="navigation" aria-label="Factory locations">
-      <button class="slot active" data-go="home" title="Home (H)"><span class="slot-key">1</span><img src="/factorio/icons/iron-plate.png" alt=""/><span>Home</span></button>
-      <button class="slot" data-go="factory" title="Production"><span class="slot-key">2</span><img src="/factorio/icons/electronic-circuit.png" alt=""/><span>Production</span></button>
-      <button class="slot" data-go="power" title="Power grid"><span class="slot-key">3</span><img src="/factorio/icons/processing-unit.png" alt=""/><span>Power</span></button>
-      <button class="slot" data-go="research" title="Research"><span class="slot-key">4</span><img src="/factorio/icons/chemical-science-pack.png" alt=""/><span>Research</span></button>
-      <button class="slot outpost-only" data-go="aws-foundation" title="Frame the AWS Foundation outpost"><img src="/factorio/icons/processing-unit.png" alt=""/><span>Build site</span></button>
-      <button class="slot outpost-only" data-go="auxide" title="Frame the Auxide outpost"><span class="speaker-icon" aria-hidden="true"></span><span>Auxide</span></button>
-      <button class="slot outpost-only" data-go="caz-nix" title="Frame the caz.nix homelab"><img src="/factorio/icons/iron-gear-wheel.png" alt=""/><span>caz.nix</span></button>
+      <button class="slot active" data-go="home" title="Home (1 / H)"><span class="slot-key" aria-hidden="true">1</span><img src="/factorio/icons/iron-plate.png" alt=""/><span>Home</span></button>
+      <button class="slot" data-go="aws-foundation" title="AWS Foundation (2)"><span class="slot-key" aria-hidden="true">2</span><img src="/factorio/icons/processing-unit.png" alt=""/><span>AWS Foundation</span></button>
+      <button class="slot" data-go="auxide" title="Auxide (3)"><span class="slot-key" aria-hidden="true">3</span><span class="speaker-icon" aria-hidden="true"></span><span>Auxide</span></button>
+      <button class="slot" data-go="caz-nix" title="caz.nix (4)"><span class="slot-key" aria-hidden="true">4</span><img src="/factorio/icons/iron-gear-wheel.png" alt=""/><span>caz.nix</span></button>
       <span class="slot-separator"></span>
       <button class="slot action" id="pause" aria-label="Pause factory animation" aria-pressed="false"><span class="pause-icon">Ⅱ</span><span>Pause</span></button>
     </div>
@@ -54,12 +50,13 @@ appElement.innerHTML = `
     <div class="dossier-body"><div class="eyebrow">AUSTIN, TEXAS / PLATFORM ENGINEERING</div><h1 id="dossier-title">Hi, I'm Josh.</h1>
       <p class="intro">I build systems that help people build things.</p>
       <p>I'm a platform engineer specializing in data infrastructure. I like making complicated systems understandable, repeatable, and easier for other people to work with. Outside work, that usually means my homelab, a side project, or a very large Factorio factory.</p>
+      <p>Factorio is my favorite game. To me, it's software engineering in game form, and playing it has made me better at my job. I built this site because it seemed like a really fun way to show off some stuff I've built.</p>
       <h2>A few things I've built</h2>
-      <a class="project" href="#aws-foundation"><img src="/factorio/icons/processing-unit.png" alt=""/><span><strong>AWS Foundation <b>→</b></strong><small>A personal multi-account AWS foundation. Identity, delivery, policy, and isolated state. Visit its construction outpost.</small><em>OPENTOFU / AWS / GITHUB ACTIONS</em></span></a>
-      <a class="project" href="#auxide"><span class="speaker-icon" aria-hidden="true"></span><span><strong>Auxide <b>→</b></strong><small>A self-hosted Discord music bot with independent playback actors, bounded queues, and operational visibility. Visit its music outpost.</small><em>RUST / TOKIO / NIX</em></span></a>
-      <a class="project" href="#caz-nix"><img src="/factorio/icons/iron-gear-wheel.png" alt=""/><span><strong>caz.nix <b>→</b></strong><small>My home server and development environment, with reproducible configuration, monitoring, backups, and rollback. Visit its homelab outpost.</small><em>NIXOS / LINUX / OBSERVABILITY</em></span></a>
+      <a class="project" href="#aws-foundation"><img src="/factorio/icons/processing-unit.png" alt=""/><span><strong>AWS Foundation <b>→</b></strong><small>My reusable setup for managing multiple AWS accounts with infrastructure as code.</small><em>OPENTOFU / AWS / GITHUB ACTIONS</em></span></a>
+      <a class="project" href="#auxide"><span class="speaker-icon" aria-hidden="true"></span><span><strong>Auxide <b>→</b></strong><small>My self-hosted Discord music bot, written in Rust.</small><em>RUST / TOKIO / NIX</em></span></a>
+      <a class="project" href="#caz-nix"><img src="/factorio/icons/iron-gear-wheel.png" alt=""/><span><strong>caz.nix <b>→</b></strong><small>The Nix configuration for my home server and WSL development environment.</small><em>NIXOS / LINUX / OBSERVABILITY</em></span></a>
       <div class="dossier-contact"><a href="mailto:joshuacazalas@gmail.com">Email me ↗</a><a href="https://github.com/joshcazalas" target="_blank" rel="noopener noreferrer">GitHub ↗</a><a href="https://www.linkedin.com/in/joshcazalas/" target="_blank" rel="noopener noreferrer">LinkedIn ↗</a></div>
-      <p class="colophon">A personal experiment inspired by my favorite game. Factory artwork © Wube Software. Local proof of concept.</p>
+      <p class="colophon">Factory artwork © Wube Software.</p>
     </div>
   </dialog>
   ${projectMarkup}
@@ -74,14 +71,6 @@ const dossier = document.querySelector<HTMLDialogElement>('#dossier')!;
 document.querySelector('#about-open')!.addEventListener('click', () => dossier.showModal());
 document.querySelector('#about-close')!.addEventListener('click', () => dossier.close());
 dossier.addEventListener('click', (event) => { if (event.target === dossier) { const r = dossier.getBoundingClientRect(); if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) dossier.close(); } });
-const projects = document.querySelector<HTMLDialogElement>('#projects')!;
-document.querySelector('#projects-open')!.addEventListener('click', () => projects.showModal());
-document.querySelector('#projects-close')!.addEventListener('click', () => projects.close());
-projects.addEventListener('click', event => {
-  if (event.target !== projects) return;
-  const r = projects.getBoundingClientRect();
-  if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) projects.close();
-});
 
 async function start() {
   const app = new Application();
@@ -137,8 +126,7 @@ async function start() {
     if (target !== 'auxide') audio.disable();
     else updateMusicPanel();
     for (const panel of [projectPanel.element,auxidePanel.element,cazPanel.element]) if (panel.hidden && panel.contains(document.activeElement)) canvas.focus({ preventScroll: true });
-    document.title = target === 'caz-nix' ? 'caz.nix — Josh Cazalas' : target === 'auxide' ? 'Auxide — Josh Cazalas' : project ? 'AWS Foundation — Josh Cazalas' : 'Josh Cazalas — Personal Factory';
-    document.querySelector('.view-label .tag')!.textContent = target === 'caz-nix' ? 'OUTPOST 03' : target === 'auxide' ? 'OUTPOST 02' : project ? 'OUTPOST 01' : 'NAUVIS';
+    document.title = target === 'caz-nix' ? 'caz.nix — Josh Cazalas' : target === 'auxide' ? 'Auxide — Josh Cazalas' : project ? 'AWS Foundation — Josh Cazalas' : 'Josh Cazalas — Portfolio';
     document.querySelectorAll('.slot[data-go]').forEach(slot => slot.classList.toggle('active', (slot as HTMLElement).dataset.go === target));
     if (project && location.hash !== `#${target}`) history.pushState(null, '', `#${target}`);
     else if (!project && isProject(fromHash())) history.pushState(null, '', location.pathname + location.search);
@@ -146,7 +134,7 @@ async function start() {
   window.addEventListener('hashchange', () => camera.go(fromHash()));
   document.querySelectorAll<HTMLAnchorElement>('a[href="#aws-foundation"],a[href="#auxide"],a[href="#caz-nix"]').forEach(link => link.addEventListener('click', event => {
     event.preventDefault();
-    dossier.close(); projects.close();
+    dossier.close();
     const target = link.hash.slice(1) as 'auxide' | 'aws-foundation' | 'caz-nix';
     camera.go(target);
     document.querySelector<HTMLElement>(target === 'caz-nix' ? '#caz-title' : target === 'auxide' ? '#auxide-title' : '#foundation-title')!.focus({ preventScroll: true });
@@ -215,18 +203,25 @@ async function start() {
   window.addEventListener('keydown', event => {
     if (!mainMenu.entered) return;
     if (document.querySelector('dialog[open]') || event.target instanceof HTMLElement && event.target.closest('button,a,input,summary')) return;
-    const destination = ['home', 'factory', 'power', 'research'][Number(event.key) - 1];
+    const destination = ['home', 'aws-foundation', 'auxide', 'caz-nix'][Number(event.key) - 1];
     if (destination) document.querySelector<HTMLButtonElement>(`.slot[data-go="${destination}"]`)?.click();
     if (event.code === 'Space') { event.preventDefault(); togglePause(); }
   });
-  const links = factory.contacts.map(contact => {
+  const links = [
+    ...factory.contacts.map(contact => ({ ...contact, destination: 'home' as const })),
+    ...outpost.contacts.map(contact => ({ ...contact, destination: 'aws-foundation' as const })),
+    ...auxide.contacts.map(contact => ({ ...contact, destination: 'auxide' as const })),
+    ...caz.contacts.map(contact => ({ ...contact, destination: 'caz-nix' as const }))
+  ].map(contact => {
     const link = document.createElement('a');
     link.className = 'world-link';
     link.href = contact.href;
     link.setAttribute('aria-label', contact.label);
     link.title = contact.label;
     if (!contact.href.startsWith('mailto:')) { link.target = '_blank'; link.rel = 'noopener noreferrer'; }
-    link.addEventListener('focus', () => { if (link.matches(':focus-visible')) camera.go('home'); });
+    link.addEventListener('focus', () => {
+      if (link.matches(':focus-visible') && destination !== contact.destination) camera.go(contact.destination);
+    });
     document.querySelector('#world-links')!.appendChild(link);
     return { element: link, ...contact };
   });

@@ -26,8 +26,6 @@ try {
     assert(after.x < before.x - 200, 'Dragging must move the camera');
     await page.mouse.wheel(0, -450); await page.waitForTimeout(800);
     assert((await page.evaluate(() => window.__factory.camera.zoom)) > before.zoom, 'Wheel must zoom');
-    await page.locator('.slot[data-go="factory"]').click(); await page.waitForTimeout(1000);
-    await page.screenshot({ path: '.local/screenshots/production-desktop.png' });
     await page.locator('#pause').click();
     const time = await page.evaluate(() => window.__factory.time);
     await page.waitForTimeout(300);
@@ -72,7 +70,7 @@ try {
     assert(wrapped.has(start.trains[0].id),'Observe the lead train complete a lap');
     assert(Math.abs((previous.time-start.time)-(previous.wall-start.wall))<.6,'Slow rendering must not slow the animation clock');
     console.log('Passed: persistent trains, full-loop carriage continuity, cruising speed, and real-time animation.');
-    for(const destination of ['research','power']) {
+    for(const destination of ['aws-foundation','auxide','caz-nix']) {
       await page.locator(`.slot[data-go="${destination}"]`).click();
       await page.waitForTimeout(1100);
       await page.screenshot({path:`.local/screenshots/${destination}-desktop.png`});

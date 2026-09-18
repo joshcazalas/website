@@ -12,6 +12,7 @@ try {
   const page=await browser.newPage({viewport:{width:1600,height:1000}});watch(page);
   await page.goto(base);await ready(page);
   assert.equal(await page.locator('#entry-screen button:visible').count(),1);
+  assert(await page.locator('.entry-brand img[alt="Josh Cazalas"]').evaluate(e=>e.complete&&e.naturalWidth>0));
   assert(await page.locator('#factory-shell').evaluate(e=>e.hidden));
   assert(await page.locator('#factory-shell').evaluate(e=>e.inert));
   const before=await page.evaluate(()=>({time:window.__factory.time,menu:window.__factory.menu,camera:window.__factory.camera}));
@@ -34,11 +35,20 @@ try {
   assert.equal(await page.evaluate(()=>document.activeElement.id),'factory-canvas');
   const stopped=await page.evaluate(()=>window.__factory.menu.seconds);await page.waitForTimeout(250);
   assert.equal(await page.evaluate(()=>window.__factory.menu.seconds),stopped);
+  assert.equal(await page.locator('.quickbar .slot:visible').count(),5);
+  await page.screenshot({path:'.local/screenshots/home-project-quickbar.png'});
   for(const project of ['aws-foundation','auxide','caz-nix']) {
-    await page.locator('#projects-open').click();await page.locator(`#projects a[href="#${project}"]`).click();
+    await page.locator(`.slot[data-go="${project}"]`).click();
     assert.equal(await page.evaluate(()=>window.__factory.destination),project);
     assert(!(await page.locator('#entry-screen').isVisible()));
   }
+  for(const [key,destination] of [['1','home'],['2','aws-foundation'],['3','auxide'],['4','caz-nix']]) {
+    await page.locator('#factory-canvas').focus();await page.keyboard.press(key);
+    assert.equal(await page.evaluate(()=>window.__factory.destination),destination);
+    assert(await page.locator(`.slot[data-go="${destination}"]`).evaluate(e=>e.classList.contains('active')));
+  }
+  await page.goBack();await page.waitForFunction(()=>window.__factory.destination==='auxide');
+  await page.goForward();await page.waitForFunction(()=>window.__factory.destination==='caz-nix');
   await page.close();
   console.log('Passed: one Play option, animated rotating scenes, independent clocks, keyboard entry, loading, and all project destinations.');
 
@@ -51,6 +61,16 @@ try {
   await enterFactory(mobile);
   assert.equal(await mobile.evaluate(()=>window.__factory.destination),'caz-nix');
   assert(await mobile.evaluate(()=>window.__factory.paused));
+  for(const destination of ['home','aws-foundation','auxide','caz-nix']) {
+    await mobile.locator(`.slot[data-go="${destination}"]`).tap();
+    assert.equal(await mobile.evaluate(()=>window.__factory.destination),destination);
+    assert.equal(await mobile.locator('.quickbar .slot:visible').count(),5);
+    for(const slot of await mobile.locator('.quickbar .slot').all()) {
+      const b=await slot.boundingBox();
+      assert(b&&b.x>=0&&b.x+b.width<=390&&b.y>=0&&b.y+b.height<=844,'Every quickbar button fits on mobile');
+    }
+  }
+  await mobile.screenshot({path:'.local/screenshots/project-quickbar-mobile.png'});
   await mobile.close();
   console.log('Passed: mobile layout, still reduced-motion backdrop, Play, and preserved project deep link.');
 

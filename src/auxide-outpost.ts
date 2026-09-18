@@ -1,6 +1,6 @@
 import { Container, Graphics, Sprite } from 'pixi.js';
 import { FactoryCore, type View } from './factory-core';
-import { pixelText } from './pixel-font';
+import { pixelText, pixelWidth } from './pixel-font';
 import { pixelFerris } from './pixel-ferris';
 import { AUXIDE_SITE } from './outpost-location';
 import { SERVERS, TRACKS, type PlaybackSnapshot } from './auxide-playback';
@@ -133,11 +133,14 @@ export class AuxideOutpost extends FactoryCore {
     this.scene.addChild(new Graphics().rect(80,64,8,256).fill(0x83c7bd));
     pixelText(this.scene, 'AUXIDE', 128, 88, 26, 0xe3e4c7);
     pixelFerris(this.scene, 1984, 42, 10);
-    pixelText(this.scene, 'EVERY SERVER HAS ITS OWN RHYTHM.', 136, 294, 5, 0xc0cdb0);
+    const repoLabel = 'GITHUB.COM/JOSHCAZALAS/AUXIDE';
+    pixelText(this.scene, repoLabel, 136, 294, 6, 0xf1e7be);
+    this.contacts.push({ label: 'Auxide on GitHub', href: 'https://github.com/joshcazalas/auxide',
+      x: AUXIDE_SITE.x + 118, y: AUXIDE_SITE.y + 276, width: pixelWidth(repoLabel, 6) + 36, height: 78 });
     pixelText(this.scene, 'PROJECT / 02', 3940, 104, 4, 0xafc9b2);
     pixelText(this.scene, 'RUST / TOKIO / SONGBIRD', 3584, 290, 4, 0xa0b89f);
     pixelText(this.scene, 'SOURCE ADAPTER', 128, 452, 6, 0xd6d3b4);
-    pixelText(this.scene, 'THREE GUILDS / THREE PLAYERS / NO SHARED QUEUE', 992, 452, 5, 0xbac9ae);
+    pixelText(this.scene, 'DISCORD SERVERS', 992, 452, 6, 0xbac9ae);
 
     this.pad(128,576,640,1920,'#7c967b',true);
     pixelText(this.scene, 'RESOLVE', 192, 624, 5, 0xcbd2b4);
@@ -169,7 +172,6 @@ export class AuxideOutpost extends FactoryCore {
       const line = new MusicLine(i); line.useAssets(this);
       line.root.position.set(LINE_X,y); this.scene.addChild(line.root); this.lines.push(line);
     }
-    pixelText(this.scene, 'INDEPENDENT STATE. SHARED INFRASTRUCTURE.', 2272, 2700, 5, 0xbbc9a7, true);
   }
 
   render(clock: number, view: View, zoom: number, snapshots: PlaybackSnapshot[], selected: number) {

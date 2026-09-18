@@ -1,6 +1,6 @@
 import { Container, Graphics, type Sprite } from 'pixi.js';
 import { FactoryCore, type View, type AssetName, type Point } from './factory-core';
-import { pixelText } from './pixel-font';
+import { pixelText, pixelWidth } from './pixel-font';
 import { pixelNix } from './pixel-nix';
 import { CAZ_SITE } from './outpost-location';
 import { generation, type ReleaseSnapshot } from './caz-release';
@@ -89,11 +89,14 @@ export class CazOutpost extends FactoryCore {
     this.scene.addChild(new Graphics().rect(80,64,8,256).fill(BLUE));
     pixelText(this.scene,'CAZ.NIX',128,88,26,IVORY);
     pixelNix(this.scene,1984,42,6.5);
-    pixelText(this.scene,'ONE CONFIGURATION. A WHOLE HOME.',136,294,5,0xc0cdb0);
+    const repoLabel='GITHUB.COM/JOSHCAZALAS/CAZ.NIX';
+    pixelText(this.scene,repoLabel,136,294,6,0xf1e7be);
+    this.contacts.push({label:'caz.nix on GitHub',href:'https://github.com/joshcazalas/caz.nix',
+      x:CAZ_SITE.x+118,y:CAZ_SITE.y+276,width:pixelWidth(repoLabel,6)+36,height:78});
     pixelText(this.scene,'PROJECT / 03',3940,104,4,0xafc9b2);
     pixelText(this.scene,'NIXOS / HOME MANAGER / LINUX',3488,290,4,0xa0b89f);
     pixelText(this.scene,'PINNED INPUTS',128,454,6,BLUE);
-    pixelText(this.scene,'A HOME SERVER, EXPRESSED AS CODE.',2688,454,6,IVORY,true);
+    pixelText(this.scene,'HOMELAB SERVICES',2688,454,6,IVORY,true);
 
     // The flake branches into a server closure and an independent WSL home.
     this.pad(128,640,608,1280,'#7e9193',true);
@@ -174,7 +177,6 @@ export class CazOutpost extends FactoryCore {
     this.robotsBetween([2272,1632],[1408,928],3);
     this.robotsBetween([2944,1888],[3744,2656],3);
     this.robotsBetween([2272,1888],[1376,2656],3);
-    pixelText(this.scene,'PIN. BUILD. ACTIVATE. VERIFY. KEEP A WAY BACK.',2240,3104,5,0xbcc8ab,true);
     this.scene.addChild(this.overlay,this.captions);
   }
 

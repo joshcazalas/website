@@ -2,21 +2,29 @@ export const mainMenuMarkup = `
   <section id="entry-screen" class="entry-screen" aria-label="Main menu" data-state="menu">
     <div id="menu-backdrop" aria-hidden="true"></div>
     <div class="entry-shade" aria-hidden="true"></div>
-    <div class="entry-brand"><img src="/factorio/menu/logo.png" alt="Factorio" width="1536" height="432" fetchpriority="high"><p>JOSH CAZALAS <span>/</span> PERSONAL FACTORY</p></div>
+    <div class="entry-brand"><img src="/branding/josh-cazalas.png" alt="Josh Cazalas" width="2172" height="724" fetchpriority="high"></div>
     <div id="main-menu" class="entry-window main-menu" aria-labelledby="main-menu-title">
       <div class="entry-window-heading"><h1 id="main-menu-title">Main menu</h1><span class="entry-grip" aria-hidden="true"></span></div>
-      <div class="main-menu-body"><button id="play-factory" class="entry-play">Play</button></div>
+      <div class="main-menu-body">
+        <button id="play-factory" class="entry-play">Play</button>
+        <p class="entry-context">A portfolio inspired by my favorite game, Factorio.</p>
+        <nav class="entry-links" aria-label="Find Josh online">
+          <a href="https://github.com/joshcazalas" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a>
+          <span aria-hidden="true">·</span>
+          <a href="https://www.linkedin.com/in/joshcazalas/" target="_blank" rel="noopener noreferrer">LinkedIn <span aria-hidden="true">↗</span></a>
+        </nav>
+      </div>
     </div>
     <section id="entry-loading" class="entry-window entry-loading" aria-labelledby="entry-loading-title" hidden>
       <div class="entry-window-heading"><h2 id="entry-loading-title" tabindex="-1">Loading map</h2><span class="entry-grip" aria-hidden="true"></span></div>
       <div class="entry-loading-body">
-        <div class="entry-save"><img src="/factorio/icons/iron-gear-wheel.png" alt="" width="46" height="46"><span>Josh's personal factory<small>Nauvis · Three project outposts</small></span></div>
+        <div class="entry-save"><img src="/factorio/icons/iron-gear-wheel.png" alt="" width="46" height="46"><span>Josh Cazalas — Portfolio<small>Three project outposts</small></span></div>
         <div id="entry-progress" class="entry-progress" role="progressbar" aria-label="Preparing the factory" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div></div></div>
         <div class="entry-load-status"><span id="entry-status" role="status" aria-live="polite">Preparing the surface…</span><span id="entry-percent" aria-hidden="true">0%</span></div>
         <p id="entry-error" hidden></p><button id="entry-retry" class="entry-play" hidden>Retry</button>
       </div>
     </section>
-    <footer class="entry-footer"><span>JOSHCAZALAS.COM</span><span>Factory artwork © Wube Software · Local proof of concept</span></footer>
+    <footer class="entry-footer"><span>JOSHCAZALAS.COM</span><span>Factory artwork © Wube Software</span></footer>
   </section>
 `;
 

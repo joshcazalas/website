@@ -1,7 +1,7 @@
 import { Container, Graphics, Sprite } from 'pixi.js';
 import { FactoryCore, type AssetName, type View } from './factory-core';
 import { beltCells, beltPosition, beltRow, type Cell, type Point } from './paths';
-import { pixelText } from './pixel-font';
+import { pixelText, pixelWidth } from './pixel-font';
 import { pixelAws } from './pixel-aws';
 import { FOUNDATION_SITE } from './outpost-location';
 import { buildTime, deploymentPhase, flightProgress, POWER_ON, DEPLOYMENT_DURATION, type BuildStage } from './foundation-deployment';
@@ -50,7 +50,10 @@ export class FoundationOutpost extends FactoryCore {
     this.scene.addChild(heading);
     pixelText(this.scene, 'AWS FOUNDATION', 128, 92, 16, 0xe5ddbb);
     pixelAws(this.scene, 1984, 44, 10);
-    pixelText(this.scene, 'ONE BLUEPRINT. REPEATABLE FOUNDATIONS.', 132, 244, 4, 0xbfc7a5);
+    const repoLabel = 'GITHUB.COM/JOSHCAZALAS/AWS-FOUNDATION';
+    pixelText(this.scene, repoLabel, 132, 240, 6, 0xf1e7be);
+    this.contacts.push({ label: 'AWS Foundation on GitHub', href: 'https://github.com/joshcazalas/aws-foundation',
+      x: FOUNDATION_SITE.x + 114, y: FOUNDATION_SITE.y + 222, width: pixelWidth(repoLabel, 6) + 36, height: 78 });
     pixelText(this.scene, 'PROJECT / 01', 4000, 116, 4, 0xc8b383);
     pixelText(this.scene, 'REMOTE BUILD SITE', 3868, 232, 4, 0x9da88b);
 

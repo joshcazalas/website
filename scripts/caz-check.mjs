@@ -13,11 +13,21 @@ const watch=page=>{
 };
 const state=page=>page.evaluate(()=>window.__factory.caz);
 const phase=(page,value)=>page.waitForFunction(value=>window.__factory.caz.phase===value,value,{timeout:35000});
+const repoUrl='https://github.com/joshcazalas/caz.nix';
+const mapRepo=`.world-link[href="${repoUrl}"]`;
+const checkRepoTab=async(page,activate)=>{
+  // Exercise the map anchor without contacting the external site.
+  await page.context().route(repoUrl,route=>route.fulfill({contentType:'text/html',body:'<title>Repository</title>'}));
+  const opened=page.waitForEvent('popup');
+  await activate();
+  const tab=await opened;
+  await tab.waitForURL(repoUrl);await tab.close();await page.bringToFront();
+  assert.equal(await page.evaluate(()=>window.__factory.destination),'caz-nix');
+};
 try {
   const page=await browser.newPage({viewport:{width:1600,height:1000}});watch(page);
   await page.goto(base);await ready(page);
-  await page.locator('#projects-open').click();
-  await page.locator('#projects a[href="#caz-nix"]').click();
+  await page.locator('.slot[data-go="caz-nix"]').click();
   assert.equal(new URL(page.url()).hash,'#caz-nix');
   assert.equal(await page.title(),'caz.nix — Josh Cazalas');
   assert(await page.locator('#caz-panel').isVisible());
@@ -27,6 +37,12 @@ try {
   assert.equal(await page.locator('#caz-panel .source-link').getAttribute('href'),'https://github.com/joshcazalas/caz.nix');
   await page.waitForTimeout(1200);
   await page.screenshot({path:'.local/screenshots/caz-desktop.png'});
+  const repo=page.locator(mapRepo);
+  assert(await repo.isVisible(),'The pixel repository URL is a visible link');
+  assert.equal(await repo.getAttribute('target'),'_blank');
+  await repo.hover();await page.screenshot({path:'.local/screenshots/caz-repo-link.png'});
+  await checkRepoTab(page,()=>repo.click());
+  await repo.focus();await checkRepoTab(page,()=>page.keyboard.press('Enter'));
 
   await page.locator('#caz-deploy').click();await phase(page,'verify');
   assert(await page.locator('#caz-deploy').isDisabled());
@@ -42,7 +58,7 @@ try {
   await phase(page,'accepted');
   const healthy=await state(page);assert.equal(healthy.active,2);assert(!healthy.quarantined);
   await page.screenshot({path:'.local/screenshots/caz-accepted.png'});
-  console.log('Passed: directory, scene loading, healthy release, archival before activation, pause/resume, and acceptance.');
+  console.log('Passed: quickbar, scene loading, healthy release, archival before activation, pause/resume, and acceptance.');
 
   await page.locator('#caz-failure').check();await page.locator('#caz-deploy').click();
   await phase(page,'confirm');
@@ -57,15 +73,14 @@ try {
   assert.equal(recovered.activeSlot,healthy.activeSlot);
   await page.screenshot({path:'.local/screenshots/caz-recovered.png'});
   await page.locator('#caz-panel .project-details summary').click();
-  assert.match(await page.locator('#caz-panel .project-details').innerText(),/explicit restoration/);
+  assert.match(await page.locator('#caz-panel .project-details').innerText(),/Nix configuration/);
   await page.locator('#caz-panel .project-details summary').click();
   await page.locator('#caz-failure').uncheck();await page.locator('#caz-deploy').click();await page.locator('#caz-finish').click();
   await phase(page,'accepted');assert.equal((await state(page)).active,4);
 
   // Browser history and moving between all three projects preserve release state.
   for(const destination of ['auxide','aws-foundation']) {
-    await page.locator('#projects-open').click();
-    await page.locator(`#projects a[href="#${destination}"]`).click();
+    await page.locator(`.slot[data-go="${destination}"]`).click();
     assert(!(await page.locator('#caz-panel').isVisible()));
     await page.goBack();
     await page.waitForFunction(()=>window.__factory.destination==='caz-nix');
@@ -91,6 +106,8 @@ try {
     assert(b&&b.x>=0&&b.x+b.width<=390&&b.y>=0&&b.y+b.height<=844,`${selector} must fit mobile`);
   }
   await mobile.screenshot({path:'.local/screenshots/caz-mobile.png'});
+  assert(await mobile.locator(mapRepo).isVisible());
+  await checkRepoTab(mobile,()=>mobile.locator(mapRepo).tap());
   await mobile.locator('#caz-failure').check();await mobile.locator('#caz-deploy').tap();await phase(mobile,'recovered');
   const still=await state(mobile);await mobile.waitForTimeout(350);assert.deepEqual(await state(mobile),still);
   assert.equal(still.active,1);assert(still.quarantined);
@@ -103,5 +120,5 @@ try {
   await mobile.locator('.slot[data-go="home"]').tap();
   assert(!(await mobile.locator('#caz-panel').isVisible()));
   assert.deepEqual(errors,[],'No rendering, asset, or runtime errors');
-  console.log('Passed: direct link, mobile controls and details, reduced motion, instant recovery and success, and return home.');
+  console.log('Passed: direct link, pixel GitHub link with click/keyboard/touch activation, mobile controls and details, reduced motion, instant recovery and success, and return home.');
 } finally {await browser.close();}
