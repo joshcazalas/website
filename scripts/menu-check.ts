@@ -16,13 +16,26 @@ try {
   assert(await page.locator('#factory-shell').evaluate(e => e instanceof HTMLElement && e.hidden));
   assert(await page.locator('#factory-shell').evaluate(e => e instanceof HTMLElement && e.inert));
   const before=await page.evaluate(()=>({time:window.__factory.time,menu:window.__factory.menu,camera:window.__factory.camera}));
-  await page.waitForTimeout(700);
+  // Setup can outlast the first rail scene on a software-rendered CI browser.
+  // Observe two moving frames within that scene, without protocol round trips
+  // between samples or assuming which backdrop is active after page load.
+  await page.evaluate(async()=>{
+    const deadline=performance.now()+65000;
+    let prior=window.__factory.menu;
+    while(performance.now()<deadline) {
+      await new Promise<void>(resolve=>requestAnimationFrame(()=>resolve()));
+      const current=window.__factory.menu;
+      if(prior.index===0&&current.index===0&&prior.trains.length>0&&current.trains.length===prior.trains.length
+        &&current.seconds>prior.seconds&&JSON.stringify(current.trains)!==JSON.stringify(prior.trains))return;
+      prior=current;
+    }
+    throw new Error('The rail backdrop did not show moving trains within a complete menu cycle');
+  });
   const after=await page.evaluate(()=>({time:window.__factory.time,menu:window.__factory.menu,camera:window.__factory.camera}));
   assert.equal(after.time,before.time);assert(after.menu.seconds>before.menu.seconds);
-  assert.notDeepEqual(after.menu.trains,before.menu.trains);
   await page.keyboard.press('m');assert.deepEqual(await page.evaluate(()=>window.__factory.camera),before.camera);
   await page.screenshot({path:'.local/screenshots/menu-rail.png'});
-  await page.waitForFunction(()=>window.__factory.menu.index===1,null,{timeout:25000});
+  await page.waitForFunction(()=>window.__factory.menu.index===1,null,{timeout:65000});
   await page.waitForTimeout(400);await page.screenshot({path:'.local/screenshots/menu-research.png'});
   // Capture the initial loading state in the same browser event as Play. On a
   // slow runner the 1.4s transition can finish between separate protocol calls.
