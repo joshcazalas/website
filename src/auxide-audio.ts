@@ -1,3 +1,4 @@
+import { assetUrl } from './asset-url';
 import samples from './auxide-samples.json';
 import { notesAt, SERVERS, type PlaybackSnapshot, type Sample } from './auxide-playback';
 
@@ -32,7 +33,7 @@ export class AuxideAudio {
       await this.context.resume();
       await Promise.all(Object.entries(samples).map(async ([name, file]) => {
         if (this.buffers.has(name as Sample)) return;
-        const response = await fetch(`/factorio/sound/programmable-speaker/${file}`);
+        const response = await fetch(assetUrl(`factorio/sound/programmable-speaker/${file}`));
         if (!response.ok) throw new Error('Instrument sample unavailable');
         const buffer = await this.context!.decodeAudioData(await response.arrayBuffer());
         this.buffers.set(name as Sample, buffer);

@@ -1,5 +1,6 @@
 import { spawn } from 'node:child_process';
 import { setTimeout as delay } from 'node:timers/promises';
+import { readFileSync } from 'node:fs';
 
 const suites: Record<string, string> = {
   home: 'browser-check.ts',
@@ -12,7 +13,8 @@ const requested = process.argv.slice(2);
 const selected = requested.length ? requested : Object.keys(suites);
 if (selected.some(name => !suites[name])) throw new Error('Unknown browser suite');
 const port = process.env.TEST_PORT || '4173';
-const url = `http://127.0.0.1:${port}/`;
+const identity = JSON.parse(readFileSync('dist/release.json', 'utf8')) as { assetBase: string };
+const url = `http://127.0.0.1:${port}${identity.assetBase}`;
 const server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', 'preview', '--host', '127.0.0.1', '--port', port, '--strictPort'], { stdio: ['ignore', 'pipe', 'inherit'] });
 let serverExited = false;
 server.once('exit', () => { serverExited = true; });

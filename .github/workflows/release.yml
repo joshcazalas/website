@@ -16,15 +16,19 @@ concurrency:
 jobs:
   build:
     if: github.ref == 'refs/heads/main'
-    uses: ./.github/workflows/validate.yml
-    with:
-      package-release: true
+    uses: ./.github/workflows/build.yml
     secrets:
       ASSETS_READ_TOKEN: ${{ secrets.ASSETS_READ_TOKEN }}
 
+  package:
+    needs: build
+    uses: ./.github/workflows/package.yml
+    with:
+      build-artifact: ${{ needs.build.outputs.artifact-name }}
+
   publish:
     name: Attest and publish immutable release
-    needs: build
+    needs: package
     # Publishing requires a separate, explicit opt-in after public-repository sign-off.
     if: github.event.repository.private == false && vars.RELEASES_ENABLED == 'true'
     runs-on: ubuntu-24.04
@@ -43,26 +47,35 @@ jobs:
           package-manager-cache: false
       - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
         with:
-          name: ${{ needs.build.outputs.artifact-name }}
+          name: ${{ needs.package.outputs.artifact-name }}
           path: release
       - name: Check release identity, completeness, and hashes
         env:
           EXPECTED_COMMIT: ${{ github.sha }}
-          EXPECTED_TAG: ${{ needs.build.outputs.tag }}
+          EXPECTED_TAG: ${{ needs.package.outputs.tag }}
         run: node scripts/verify-release.ts
       - name: Attest every release file
+        id: provenance
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-path: release/*
       - name: Bind the runtime SBOM to the deployable archive
+        id: sbom
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-path: release/website.tar.gz
           sbom-path: release/sbom-runtime.cdx.json
+      - name: Include offline verification bundles
+        env:
+          PROVENANCE_BUNDLE: ${{ steps.provenance.outputs.bundle-path }}
+          SBOM_BUNDLE: ${{ steps.sbom.outputs.bundle-path }}
+        run: |
+          cp "$PROVENANCE_BUNDLE" release/provenance.sigstore.json
+          cp "$SBOM_BUNDLE" release/sbom.sigstore.json
       - name: Upload a complete draft, then publish
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ needs.build.outputs.tag }}
+          RELEASE_TAG: ${{ needs.package.outputs.tag }}
           COMMIT_SHA: ${{ github.sha }}
         run: |
           # No clobber or delete: reruns cannot silently replace a release.

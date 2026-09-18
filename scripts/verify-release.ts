@@ -5,6 +5,7 @@ import { lstatSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
 type ReleaseManifest = {
+  schema: number; asset_base: string;
   repository: string; source_ref: string; commit: string; tag: string;
   files: Record<string, { size: number; sha256: string }>;
 };
@@ -13,6 +14,8 @@ const expected = ['website.tar.gz', 'manifest.json', 'site-inventory.json', 'ass
 assert.deepEqual(readdirSync(root).sort(), expected, 'Unexpected release files');
 for (const name of expected) assert(lstatSync(join(root, name)).isFile(), `Expected regular release file: ${name}`);
 const manifest = JSON.parse(readFileSync(join(root, 'manifest.json'), 'utf8')) as ReleaseManifest;
+assert.equal(manifest.schema, 2);
+assert.equal(manifest.asset_base, `/releases/${manifest.commit}/`);
 assert.equal(manifest.repository, 'joshcazalas/website');
 assert.equal(manifest.source_ref, 'refs/heads/main');
 assert.equal(manifest.commit, process.env.EXPECTED_COMMIT);

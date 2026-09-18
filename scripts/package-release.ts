@@ -31,10 +31,12 @@ const lockDigest = fileDigest(join(ROOT, 'package-lock.json')).sha256;
 const buildDirectory = values['build-artifact'] ? resolve(values['build-artifact']) : undefined;
 const buildManifest = buildDirectory ? validateBundle(buildDirectory, commit, lockDigest) : undefined;
 if (buildManifest) assert.deepEqual(files, buildManifest.files, 'Release files differ from the build tested in CI');
+const siteIdentity = readJson<{ schema: number; commit: string; assetBase: string }>(join(ROOT, 'dist/release.json'));
+assert.deepEqual(siteIdentity, { schema: 1, commit, assetBase: `/releases/${commit}/` }, 'Build identity differs from the release commit');
 assert('index.html' in files && Object.keys(files).some(name => name.startsWith('assets/') && name.endsWith('.js')), 'Missing production build');
 const expectedAssets = Object.fromEntries(Object.entries(lock.files).map(([name, info]) => [`factorio/${name}`, info]));
 assert.deepEqual(Object.fromEntries(Object.entries(files).filter(([name]) => name.startsWith('factorio/'))), expectedAssets, 'Production assets differ from the pinned pack');
-for (const name of Object.keys(files)) assert(name === 'index.html' || name === 'branding/josh-cazalas.png' || name in expectedAssets || /^assets\/[^/]+\.(js|css)$/.test(name), `Unexpected deployable file: ${name}`);
+for (const name of Object.keys(files)) assert(name === 'index.html' || name === 'release.json' || name === 'branding/josh-cazalas.png' || name in expectedAssets || /^assets\/[^/]+\.(js|css)$/.test(name), `Unexpected deployable file: ${name}`);
 const site = join(directory, 'website.tar.gz');
 archiveFiles(join(ROOT, 'dist'), Object.keys(files), site);
 const staging = mkdtempSync(join(tmpdir(), 'website-release-'));
@@ -52,7 +54,7 @@ for (const scope of ['runtime', 'build'] as const) {
   writeJson(join(directory, `sbom-${scope}.cdx.json`), sbom);
 }
 writeJson(join(directory, 'manifest.json'), {
-  schema: 1, repository: 'joshcazalas/website', tag, commit,
+  schema: 2, repository: 'joshcazalas/website', tag, commit, asset_base: siteIdentity.assetBase,
   source_ref: process.env.GITHUB_REF || command('git', 'symbolic-ref', 'HEAD'), source_date: timestamp,
   asset_pack: { repository: lock.repository, tag: lock.tag, sha256: lock.sha256, factorio_version: lock.factorio_version },
   toolchain: buildManifest?.toolchain ?? { node: command('node', '--version'), npm: command('npm', '--version') },
