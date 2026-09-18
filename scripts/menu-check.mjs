@@ -24,10 +24,23 @@ try {
   await page.screenshot({path:'.local/screenshots/menu-rail.png'});
   await page.waitForFunction(()=>window.__factory.menu.index===1,null,{timeout:25000});
   await page.waitForTimeout(400);await page.screenshot({path:'.local/screenshots/menu-research.png'});
+  // Capture the initial loading state in the same browser event as Play. On a
+  // slow runner the 1.4s transition can finish between separate protocol calls.
+  await page.evaluate(()=>{
+    document.querySelector('#play-factory').addEventListener('click',()=>{
+      const shell=document.querySelector('#factory-shell');
+      window.__menuLoadingSnapshot={
+        phase:document.querySelector('#entry-screen').dataset.state,
+        loadingVisible:!document.querySelector('#entry-loading').hidden,
+        shellHidden:shell.hidden,
+        shellInert:shell.inert,
+      };
+    },{once:true});
+  });
   await page.locator('#play-factory').focus();await page.keyboard.press('Enter');
-  assert(await page.locator('#entry-loading').isVisible());
-  assert(await page.locator('#factory-shell').evaluate(e=>e.hidden));
-  await page.waitForTimeout(250);await page.screenshot({path:'.local/screenshots/menu-loading.png'});
+  assert.deepEqual(await page.evaluate(()=>window.__menuLoadingSnapshot),{
+    phase:'loading',loadingVisible:true,shellHidden:true,shellInert:true,
+  });
   await page.waitForFunction(()=>window.__factory.entered);
   await page.waitForFunction(()=>document.querySelector('#entry-screen').hidden);
   assert(!(await page.locator('#factory-shell').evaluate(e=>e.hidden)));
@@ -79,6 +92,7 @@ try {
   await slow.route('**/factorio/packed/manifest.json',async route=>{await gate;await route.continue();});
   await slow.goto(base);await slow.locator('#play-factory').click();await slow.waitForTimeout(1650);
   assert(await slow.locator('#entry-loading').isVisible());assert(await slow.locator('#factory-shell').evaluate(e=>e.hidden));
+  await slow.screenshot({path:'.local/screenshots/menu-loading.png'});
   release();await slow.waitForFunction(()=>window.__factory?.entered,null,{timeout:60000});await slow.close();
 
   const broken=await browser.newPage({viewport:{width:1280,height:800}});watch(broken);
