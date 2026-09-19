@@ -32,7 +32,7 @@ For another installation:
 npm run assets:import -- "/path/to/Factorio"
 ```
 
-It imports 87 sprite definitions, three fonts, the in-world Factorio logo, and nine programmable-speaker instrument samples into `public/factorio/`. The importer uses Sharp to crop the required animation frames and train orientations into three shared texture atlases. That directory, the local screenshots, and build output are gitignored. Game artwork and instrument samples belong to Wube Software. Public releases and the live site are not enabled yet. The optional home-server deployment is documented in [caz.nix](https://github.com/joshcazalas/caz.nix/blob/main/docs/website.md).
+It imports 87 sprite definitions, three fonts, the in-world Factorio logo, and nine programmable-speaker instrument samples into `public/factorio/`. The importer uses Sharp to crop the required animation frames and train orientations into three shared texture atlases. That directory, the local screenshots, and build output are gitignored. Game artwork and instrument samples belong to Wube Software. Every merge to `main` publishes a complete build, SBOMs, and signed attestations to [GitHub Releases](https://github.com/joshcazalas/website/releases). The optional home-server deployment is documented in [caz.nix](https://github.com/joshcazalas/caz.nix/blob/main/docs/website.md).
 
 After pulling changes to the sprite catalog or importer, rerun `npm run assets:import` before starting the site.
 

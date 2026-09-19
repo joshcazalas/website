@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   build:
-    if: github.ref == 'refs/heads/main' && (github.event.repository.private || vars.RELEASES_ENABLED == 'true')
+    if: github.ref == 'refs/heads/main'
     uses: ./.github/workflows/build.yml
     secrets:
       ASSETS_READ_TOKEN: ${{ secrets.ASSETS_READ_TOKEN }}
@@ -29,8 +29,6 @@ jobs:
   publish:
     name: Attest and publish immutable release
     needs: package
-    # Publishing requires a separate, explicit opt-in after public-repository sign-off.
-    if: github.event.repository.private == false && vars.RELEASES_ENABLED == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
