@@ -1,6 +1,6 @@
 # Josh Cazalas — Portfolio
 
-A local proof of concept for joshcazalas.com: a detached camera over an animated Factorio megafactory, with a concrete identity plaza and pixel lettering. No player character or building mechanics.
+A Factorio-inspired portfolio for joshcazalas.com. Explore an animated megafactory and three project outposts with a detached camera, or use the main menu's GitHub and LinkedIn links. Built with TypeScript and PixiJS.
 
 ## Run locally in WSL
 
@@ -15,8 +15,8 @@ npm run dev
 With access to the private `website-assets` repository, use `npm run assets:fetch`
 instead of `assets:import` to retrieve the exact checksum-pinned runtime pack.
 See [CI and releases](docs/ci-and-releases.md) for credentials, validation, and
-release operations. The source repo remains private until explicitly approved
-for publication; the asset repository stays private independently.
+release operations. The source is public; the game assets are stored separately
+in a private repository and are not included in this checkout.
 
 Open **http://localhost:5173** in your Windows browser. The Vite server binds to `127.0.0.1`. WSL's localhost forwarding normally makes it available from Windows.
 
@@ -32,7 +32,7 @@ For another installation:
 npm run assets:import -- "/path/to/Factorio"
 ```
 
-It imports 87 sprite definitions, three fonts, the in-world Factorio logo, and nine programmable-speaker instrument samples into `public/factorio/`. The importer uses Sharp to crop the required animation frames and train orientations into three shared texture atlases. That directory, the local screenshots, and build output are gitignored. Game artwork and instrument samples belong to Wube Software. This prototype is for local exploration; no deployment is configured.
+It imports 87 sprite definitions, three fonts, the in-world Factorio logo, and nine programmable-speaker instrument samples into `public/factorio/`. The importer uses Sharp to crop the required animation frames and train orientations into three shared texture atlases. That directory, the local screenshots, and build output are gitignored. Game artwork and instrument samples belong to Wube Software. Public releases and the live site are not enabled yet. The optional home-server deployment is documented in [caz.nix](https://github.com/joshcazalas/caz.nix/blob/main/docs/website.md).
 
 After pulling changes to the sprite catalog or importer, rerun `npm run assets:import` before starting the site.
 

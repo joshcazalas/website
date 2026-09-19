@@ -2,28 +2,36 @@ name: Build site
 
 on:
   workflow_call:
+    inputs:
+      validate-in-place:
+        type: boolean
+        default: false
     secrets:
       ASSETS_READ_TOKEN:
         required: false
     outputs:
       artifact-name:
         value: ${{ jobs.build.outputs.artifact-name }}
+      validated-in-place:
+        value: ${{ jobs.build.outputs.validated-in-place }}
 
 permissions:
   contents: read
 
 jobs:
   build:
-    name: Build production artifact
+    name: Build production site
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 25
     outputs:
       artifact-name: ${{ steps.identity.outputs.name }}
+      validated-in-place: ${{ inputs.validate-in-place }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Keep media artifacts private until public releases are approved
+        if: ${{ !inputs.validate-in-place }}
         env:
           REPO_PRIVATE: ${{ github.event.repository.private }}
           RELEASES_ENABLED: ${{ vars.RELEASES_ENABLED }}
@@ -51,10 +59,25 @@ jobs:
       - run: npm run build
       - name: Record the build and its original dependency inventories
         run: node scripts/build-artifact.ts create
+      # Public Actions artifacts are downloadable by readers of the source repo.
+      # Until media publication is approved, keep the build and tests on this runner.
+      - name: Install the browser for validation without artifact uploads
+        if: inputs.validate-in-place
+        run: npx --no-install playwright install --with-deps --only-shell chromium
+      - name: Test the production build
+        if: inputs.validate-in-place
+        run: npm run test:production -- --parallel
+      - name: Verify and package the tested build without uploading it
+        if: inputs.validate-in-place
+        run: |
+          node scripts/build-artifact.ts verify
+          node scripts/package-release.ts --build-artifact .local/ci-build
       - name: Choose the shared artifact identity
+        if: ${{ !inputs.validate-in-place }}
         id: identity
         run: echo "name=website-build-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: ${{ !inputs.validate-in-place }}
         with:
           name: ${{ steps.identity.outputs.name }}
           path: .local/ci-build/*
