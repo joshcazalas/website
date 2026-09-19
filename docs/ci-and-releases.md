@@ -57,9 +57,10 @@ complete checkout history and tracked tree. Tool downloads are checksum-pinned;
 Actions use full commit pins. Dependabot proposes npm and Actions updates.
 
 Source checks and the production build run in parallel. While public releases are
-disabled, the build job runs all five browser suites concurrently against one local
-build, verifies it, and exercises release packaging on that same temporary runner.
-It uploads no builds, screenshots, or game assets. The manual CI input
+disabled, five parallel jobs each build from the same pinned inputs, run one browser
+suite, verify the unchanged build, and exercise packaging locally. Each WebGL
+browser has its own runner. These jobs upload no builds, screenshots, or game assets.
+The manual CI input
 `private-media` exercises this path even when the repository is private.
 
 When releases are enabled (or the repository is private), the build job fetches the

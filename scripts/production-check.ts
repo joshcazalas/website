@@ -1,7 +1,6 @@
 import { spawn } from 'node:child_process';
 import { setTimeout as delay } from 'node:timers/promises';
 import { readFileSync } from 'node:fs';
-import { parseArgs } from 'node:util';
 
 const suites: Record<string, string> = {
   home: 'browser-check.ts',
@@ -10,10 +9,7 @@ const suites: Record<string, string> = {
   auxide: 'auxide-check.ts',
   caz: 'caz-check.ts',
 };
-const { values, positionals: requested } = parseArgs({
-  options: { parallel: { type: 'boolean', default: false } },
-  allowPositionals: true,
-});
+const requested = process.argv.slice(2);
 const selected = requested.length ? requested : Object.keys(suites);
 if (selected.some(name => !suites[name])) throw new Error('Unknown browser suite');
 const port = process.env.TEST_PORT || '4173';
@@ -32,7 +28,7 @@ try {
     await delay(100);
   }
   if (!ready) throw new Error('Production preview did not become ready');
-  async function runSuite(name: string): Promise<void> {
+  for (const name of selected) {
     console.log(`Running production browser suite: ${name}`);
     const env: NodeJS.ProcessEnv = { ...process.env, TEST_URL: url };
     // Local screenshot-only options must never weaken the CI gate.
@@ -45,14 +41,6 @@ try {
       child.once('exit', resolve);
     }).finally(() => clearTimeout(timeout));
     if (code !== 0) throw new Error(`${name} browser suite failed (${code})`);
-  }
-  if (values.parallel) {
-    // Let every suite finish before stopping their shared preview server.
-    const results = await Promise.allSettled(selected.map(runSuite));
-    const errors = results.filter(result => result.status === 'rejected').map(result => result.reason as unknown);
-    if (errors.length) throw new AggregateError(errors, 'Production browser checks failed');
-  } else {
-    for (const name of selected) await runSuite(name);
   }
 } finally {
   if (!serverExited) {

@@ -120,7 +120,7 @@ jobs:
           test "$SOURCE_RESULT" = success
           test "$BUILD_RESULT" = success
           if [ "$VALIDATED_IN_PLACE" = true ]; then
-            # Build, all browser suites, and packaging ran on the same runner.
+            # Each build matrix job ran its browser suite and packaging locally.
             test "$BROWSER_RESULT" = skipped
             test "$PACKAGE_RESULT" = skipped
             exit 0

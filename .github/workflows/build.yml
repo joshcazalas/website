@@ -20,9 +20,15 @@ permissions:
 
 jobs:
   build:
-    name: Build production site
+    name: Build production site (${{ matrix.suite }})
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      max-parallel: 5
+      matrix:
+        # Give each software-rendered browser its own runner without public uploads.
+        suite: ${{ fromJSON(inputs.validate-in-place && '["home","menu","foundation","auxide","caz"]' || '["build"]') }}
     outputs:
       artifact-name: ${{ steps.identity.outputs.name }}
       validated-in-place: ${{ inputs.validate-in-place }}
@@ -60,13 +66,15 @@ jobs:
       - name: Record the build and its original dependency inventories
         run: node scripts/build-artifact.ts create
       # Public Actions artifacts are downloadable by readers of the source repo.
-      # Until media publication is approved, keep the build and tests on this runner.
+      # Until media publication is approved, each suite builds and tests locally.
       - name: Install the browser for validation without artifact uploads
         if: inputs.validate-in-place
         run: npx --no-install playwright install --with-deps --only-shell chromium
       - name: Test the production build
         if: inputs.validate-in-place
-        run: npm run test:production -- --parallel
+        env:
+          BROWSER_SUITE: ${{ matrix.suite }}
+        run: npm run test:production -- "$BROWSER_SUITE"
       - name: Verify and package the tested build without uploading it
         if: inputs.validate-in-place
         run: |
