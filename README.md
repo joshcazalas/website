@@ -166,7 +166,7 @@ npx playwright install chromium
 npm run test:production
 ```
 
-Scripts run directly as TypeScript on Node 24; `npm run check` checks both scripts
+Scripts run directly as TypeScript on Node 26; `npm run check` checks both scripts
 and application code in strict mode without emitting JavaScript.
 
 `test:production` starts a temporary preview server and runs all browser suites
