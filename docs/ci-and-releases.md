@@ -65,7 +65,7 @@ job packages the tested build, including on PRs. `Validate` requires all jobs to
 succeed; skipped, canceled, and failed required work does not satisfy it. The asset
 token is present only in the retrieval step, never in npm or browser-test steps.
 
-All repository scripts are TypeScript, run directly by Node 24 with no script
+All repository scripts are TypeScript, run directly by Node 26 with no script
 transpilation step. `npm run check` separately checks the application and scripts
 in strict mode. Script checks enforce erasable syntax and explicit type imports
 to match Node's native type stripping, which does not perform type checking.

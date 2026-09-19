@@ -45,7 +45,7 @@ try {
       window.__menuLoadingSnapshot={
         phase:document.querySelector<HTMLElement>('#entry-screen')!.dataset.state,
         loadingVisible:!document.querySelector<HTMLElement>('#entry-loading')!.hidden,
-        shellHidden:shell.hidden,
+        shellHidden:!!shell.hidden,
         shellInert:shell.inert,
       };
     },{once:true});
