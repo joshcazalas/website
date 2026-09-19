@@ -2,50 +2,27 @@ name: Build site
 
 on:
   workflow_call:
-    inputs:
-      validate-in-place:
-        type: boolean
-        default: false
     secrets:
       ASSETS_READ_TOKEN:
         required: false
     outputs:
       artifact-name:
         value: ${{ jobs.build.outputs.artifact-name }}
-      validated-in-place:
-        value: ${{ jobs.build.outputs.validated-in-place }}
 
 permissions:
   contents: read
 
 jobs:
   build:
-    name: Build production site (${{ matrix.suite }})
+    name: Build production site
     runs-on: ubuntu-24.04
     timeout-minutes: 15
-    strategy:
-      fail-fast: false
-      max-parallel: 5
-      matrix:
-        # Give each software-rendered browser its own runner without public uploads.
-        suite: ${{ fromJSON(inputs.validate-in-place && '["home","menu","foundation","auxide","caz"]' || '["build"]') }}
     outputs:
       artifact-name: ${{ steps.identity.outputs.name }}
-      validated-in-place: ${{ inputs.validate-in-place }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: Keep media artifacts private until public releases are approved
-        if: ${{ !inputs.validate-in-place }}
-        env:
-          REPO_PRIVATE: ${{ github.event.repository.private }}
-          RELEASES_ENABLED: ${{ vars.RELEASES_ENABLED }}
-        run: |
-          if [ "$REPO_PRIVATE" != true ] && [ "$RELEASES_ENABLED" != true ]; then
-            echo 'Public media artifacts require explicit release approval. Keep this repo private until then.' >&2
-            exit 1
-          fi
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version-file: .node-version
@@ -65,27 +42,10 @@ jobs:
       - run: npm run build
       - name: Record the build and its original dependency inventories
         run: node scripts/build-artifact.ts create
-      # Public Actions artifacts are downloadable by readers of the source repo.
-      # Until media publication is approved, each suite builds and tests locally.
-      - name: Install the browser for validation without artifact uploads
-        if: inputs.validate-in-place
-        run: npx --no-install playwright install --with-deps --only-shell chromium
-      - name: Test the production build
-        if: inputs.validate-in-place
-        env:
-          BROWSER_SUITE: ${{ matrix.suite }}
-        run: npm run test:production -- "$BROWSER_SUITE"
-      - name: Verify and package the tested build without uploading it
-        if: inputs.validate-in-place
-        run: |
-          node scripts/build-artifact.ts verify
-          node scripts/package-release.ts --build-artifact .local/ci-build
       - name: Choose the shared artifact identity
-        if: ${{ !inputs.validate-in-place }}
         id: identity
         run: echo "name=website-build-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        if: ${{ !inputs.validate-in-place }}
         with:
           name: ${{ steps.identity.outputs.name }}
           path: .local/ci-build/*

@@ -6,9 +6,6 @@ on:
       package-release:
         type: boolean
         default: false
-      private-media:
-        type: boolean
-        default: false
     secrets:
       ASSETS_READ_TOKEN:
         required: false
@@ -55,15 +52,12 @@ jobs:
 
   build:
     uses: ./.github/workflows/build.yml
-    with:
-      validate-in-place: ${{ inputs.private-media || (github.event.repository.private == false && vars.RELEASES_ENABLED != 'true') }}
     secrets:
       ASSETS_READ_TOKEN: ${{ secrets.ASSETS_READ_TOKEN }}
 
   browser:
     name: Browser (${{ matrix.suite }})
     needs: build
-    if: needs.build.outputs.validated-in-place != 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     strategy:
@@ -95,7 +89,7 @@ jobs:
         run: node scripts/build-artifact.ts verify
 
   package:
-    if: inputs.package-release && needs.build.outputs.validated-in-place != 'true'
+    if: inputs.package-release
     needs: [source, build, browser]
     uses: ./.github/workflows/package.yml
     with:
@@ -115,16 +109,9 @@ jobs:
           BROWSER_RESULT: ${{ needs.browser.result }}
           PACKAGE_RESULT: ${{ needs.package.result }}
           PACKAGE_REQUIRED: ${{ inputs.package-release }}
-          VALIDATED_IN_PLACE: ${{ needs.build.outputs.validated-in-place }}
         run: |
           test "$SOURCE_RESULT" = success
           test "$BUILD_RESULT" = success
-          if [ "$VALIDATED_IN_PLACE" = true ]; then
-            # Each build matrix job ran its browser suite and packaging locally.
-            test "$BROWSER_RESULT" = skipped
-            test "$PACKAGE_RESULT" = skipped
-            exit 0
-          fi
           test "$BROWSER_RESULT" = success
           if [ "$PACKAGE_REQUIRED" = true ]; then
             test "$PACKAGE_RESULT" = success

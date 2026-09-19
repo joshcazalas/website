@@ -1,9 +1,9 @@
 # CI and releases
 
-The website source is public. Game assets remain in a separate private repository.
-Publishing releases requires the Actions variable `RELEASES_ENABLED` to be exactly
-`true` and the source repository to be public. Leave that variable unset until
-public distribution of the built site is approved. No workflow changes visibility.
+Every merge to `main` publishes an immutable release containing the complete site,
+SBOMs, inventories, checksums, and signed attestations. PRs run the full validation
+suite before merging. The source and finished releases are public; the input asset
+repository remains private.
 
 ## Asset storage
 
@@ -56,22 +56,14 @@ simulation tests, archive security tests, Actionlint, and Gitleaks across the
 complete checkout history and tracked tree. Tool downloads are checksum-pinned;
 Actions use full commit pins. Dependabot proposes npm and Actions updates.
 
-Source checks and the production build run in parallel. While public releases are
-disabled, five parallel jobs each build from the same pinned inputs, run one browser
-suite, verify the unchanged build, and exercise packaging locally. Each WebGL
-browser has its own runner. These jobs upload no builds, screenshots, or game assets.
-The manual CI input
-`private-media` exercises this path even when the repository is private.
-
-When releases are enabled (or the repository is private), the build job fetches the
+Source checks and the production build run in parallel. The build job fetches the
 pinned assets and uploads one production build with its original dependency
 inventories. Five browser jobs test that same build concurrently: home/trains,
 menu/loading, AWS Foundation, Auxide/audio, and caz.nix/rollback. Each verifies the
 source commit, dependency lock, and file hashes before and after testing. A final
 job packages the tested build, including on PRs. `Validate` requires all jobs to
-succeed in the selected mode; skipped, canceled, and failed required work does not
-satisfy it. The asset token
-is present only in the retrieval step, never in npm or browser-test steps.
+succeed; skipped, canceled, and failed required work does not satisfy it. The asset
+token is present only in the retrieval step, never in npm or browser-test steps.
 
 All repository scripts are TypeScript, run directly by Node 24 with no script
 transpilation step. `npm run check` separately checks the application and scripts
@@ -106,9 +98,9 @@ ruleset bypass is what permits CI overrides while blocking direct pushes.
 
 ## Release builds
 
-Pull requests run the complete validation suite. In a public repository with
-`RELEASES_ENABLED` unset, the post-merge release workflow skips its jobs. Once
-enabled, it builds and packages main, then attests and publishes. It
+Pull requests run the complete validation suite. Every push to the protected
+`main` branch builds, packages, attests, and publishes a release. This includes
+documentation and dependency PRs. The release workflow
 does not repeat the simulation, browser, lint, or secret checks. This deliberately
 trusts the maintainer's review of PR results; non-strict checks do not test the
 combined result of independently passing PRs, and a bypass does not trigger a
@@ -136,30 +128,27 @@ Release files:
 The SBOMs describe installed dependency graphs; they do not claim every file from
 every dependency survived Vite's tree shaking. Media is inventoried separately.
 
-While private, release candidates are retained as Actions artifacts for 3 days on
+Release candidates are retained as public Actions artifacts for 3 days on
 PRs and 14 days on main. The intermediate shared build is retained for 3 days.
-This is a test of the release build, not an attested deployable GitHub Release.
-Native GitHub build attestations are not available for this private repo's plan.
-In a public repository before release publication is enabled, CI validates without
-uploading media and the release workflow stays idle. Before changing a private
-repository to public, remove any existing Actions artifacts containing media;
-changing visibility would make those old downloads public too. Do not rerun old
-private-repository workflows that retained media artifacts.
+PR artifacts exercise packaging; only main publishes an attested GitHub Release.
 
-Once publication is explicitly enabled, a separate job with write/signing
-permissions downloads the packaged artifact, verifies its full file set and hashes,
+A separate job with write/signing permissions downloads the packaged artifact,
+verifies its full file set and hashes,
 attests every release file, and binds the runtime SBOM to the website archive's
 digest. It creates a draft release, uploads everything, publishes, and verifies
 the resulting immutable release. No npm install or application tests run in the
 privileged publishing job. Failed reruns never overwrite an existing release;
 inspect an incomplete draft before deleting it and retrying.
 
-Before enabling `RELEASES_ENABLED`, confirm repository release immutability is
-enabled and the public-repository and asset publication decisions are complete:
+Release immutability must remain enabled:
 
 ```bash
 gh api repos/joshcazalas/website/immutable-releases
 ```
+
+To retry a failed release build, rerun the failed workflow or dispatch `Release`
+against `main`. A commit that already has a published release cannot be republished:
+the existing tag and assets remain immutable.
 
 ## Server deployment
 
@@ -176,9 +165,8 @@ assets after activation. Root HTML is served without caching.
 
 Private candidates may be imported manually into a separate LAN preview. Signed
 release mode checks the exact repository, workflow, main ref, commit, and artifact
-digests using the attached bundles before extraction and atomic activation. The
-first real signing and verification run awaits explicitly approved public release
-publication; local tests use synthetic signing-policy fixtures.
+digests using the attached bundles before extraction and atomic activation.
+Publishing a release does not itself connect to or deploy on the server.
 
 Attestations establish origin and integrity. They do not prove that code is free
 of bugs, that dependencies are safe, or that asset distribution is permitted.
