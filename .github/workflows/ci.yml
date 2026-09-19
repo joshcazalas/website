@@ -3,6 +3,11 @@ name: CI
 on:
   pull_request:
   workflow_dispatch:
+    inputs:
+      private-media:
+        description: Test without retaining builds or game assets
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -16,6 +21,7 @@ jobs:
     uses: ./.github/workflows/validate.yml
     with:
       package-release: true
+      private-media: ${{ inputs.private-media == true }}
     secrets:
       ASSETS_READ_TOKEN: ${{ secrets.ASSETS_READ_TOKEN }}
 

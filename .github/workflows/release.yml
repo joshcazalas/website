@@ -15,7 +15,7 @@ concurrency:
 
 jobs:
   build:
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && (github.event.repository.private || vars.RELEASES_ENABLED == 'true')
     uses: ./.github/workflows/build.yml
     secrets:
       ASSETS_READ_TOKEN: ${{ secrets.ASSETS_READ_TOKEN }}

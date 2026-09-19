@@ -1,9 +1,9 @@
 # CI and releases
 
-The website repository stays private until Josh explicitly approves changing its
-visibility. No workflow changes visibility. Publishing releases additionally
-requires the Actions variable `RELEASES_ENABLED` to be exactly `true` and the
-repository to be public. Leave that variable unset during private development.
+The website source is public. Game assets remain in a separate private repository.
+Publishing releases requires the Actions variable `RELEASES_ENABLED` to be exactly
+`true` and the source repository to be public. Leave that variable unset until
+public distribution of the built site is approved. No workflow changes visibility.
 
 ## Asset storage
 
@@ -56,13 +56,21 @@ simulation tests, archive security tests, Actionlint, and Gitleaks across the
 complete checkout history and tracked tree. Tool downloads are checksum-pinned;
 Actions use full commit pins. Dependabot proposes npm and Actions updates.
 
-Source checks and the production build run in parallel. The build job fetches the
+Source checks and the production build run in parallel. While public releases are
+disabled, five parallel jobs each build from the same pinned inputs, run one browser
+suite, verify the unchanged build, and exercise packaging locally. Each WebGL
+browser has its own runner. These jobs upload no builds, screenshots, or game assets.
+The manual CI input
+`private-media` exercises this path even when the repository is private.
+
+When releases are enabled (or the repository is private), the build job fetches the
 pinned assets and uploads one production build with its original dependency
 inventories. Five browser jobs test that same build concurrently: home/trains,
 menu/loading, AWS Foundation, Auxide/audio, and caz.nix/rollback. Each verifies the
 source commit, dependency lock, and file hashes before and after testing. A final
 job packages the tested build, including on PRs. `Validate` requires all jobs to
-succeed; skipped, canceled, and failed checks do not satisfy it. The asset token
+succeed in the selected mode; skipped, canceled, and failed required work does not
+satisfy it. The asset token
 is present only in the retrieval step, never in npm or browser-test steps.
 
 All repository scripts are TypeScript, run directly by Node 24 with no script
@@ -85,8 +93,8 @@ The desired main ruleset is recorded in `.github/main-ruleset.json`:
 - Direct pushes, force pushes, and branch deletion remain blocked under the ruleset.
 - Review conversations must be resolved unless deliberately bypassed.
 
-GitHub Free does not enforce this ruleset on a private repository. After public
-visibility is explicitly approved, install it with:
+GitHub Free supports these protections for this public repository. The ruleset
+is installed separately from the workflow; to recreate it if absent:
 
 ```bash
 gh api --method POST repos/joshcazalas/website/rulesets --input .github/main-ruleset.json
@@ -98,8 +106,9 @@ ruleset bypass is what permits CI overrides while blocking direct pushes.
 
 ## Release builds
 
-Pull requests run the complete validation suite. After a merge, the release
-workflow builds and packages main, then attests and publishes when enabled. It
+Pull requests run the complete validation suite. In a public repository with
+`RELEASES_ENABLED` unset, the post-merge release workflow skips its jobs. Once
+enabled, it builds and packages main, then attests and publishes. It
 does not repeat the simulation, browser, lint, or secret checks. This deliberately
 trusts the maintainer's review of PR results; non-strict checks do not test the
 combined result of independently passing PRs, and a bypass does not trigger a
@@ -131,8 +140,11 @@ While private, release candidates are retained as Actions artifacts for 3 days o
 PRs and 14 days on main. The intermediate shared build is retained for 3 days.
 This is a test of the release build, not an attested deployable GitHub Release.
 Native GitHub build attestations are not available for this private repo's plan.
-If the repo becomes public before release publication is enabled, candidate
-artifacts containing media are not uploaded.
+In a public repository before release publication is enabled, CI validates without
+uploading media and the release workflow stays idle. Before changing a private
+repository to public, remove any existing Actions artifacts containing media;
+changing visibility would make those old downloads public too. Do not rerun old
+private-repository workflows that retained media artifacts.
 
 Once publication is explicitly enabled, a separate job with write/signing
 permissions downloads the packaged artifact, verifies its full file set and hashes,
