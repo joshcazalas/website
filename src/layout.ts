@@ -123,19 +123,18 @@ export function buildLandscape(f: FactoryCore) {
   chemistry(5856,4288,4,2);
   array(7552,4256,8,4,'chemical',['sulfur','plastic'],'battery',3);
 
-  // Research is the colorful sushi-belt landmark. Each row loops back into the
-  // next, so the moving science reads as a river through the lab bank.
+  // Research recirculates on closed sushi belts around each row of labs.
   f.pad(5824,2432,2240,1632,'#548094');
   for(let row=0;row<7;row++) {
     const y=2528+row*192, inset=row%3===1?192:0;
-    f.route([[5728+inset,y-64],[7904,y-64],[7904,y+64],[5728+inset,y+64],[5728+inset,y+128],[8032,y+128]],science,45,row*113);
+    f.route([[5728+inset,y-64],[7904,y-64],[7904,y+64],[5728+inset,y+64],[5728+inset,y-64]],science,45,row*113);
     for(let col=0;col<19-Math.floor(inset/96);col++) {
       const x=5984+inset+col*96;
       if(f.machine('lab',x,y,col*2+row*3))f.inserter(x,y-48,false,col+row);
     }
     f.poles([[5632,y+32],[8128,y+32]]);
   }
-  f.route([[8032,2496],[8160,2496],[8160,4032],[5664,4032],[5664,2432],[7840,2432]],science,48);
+  f.route([[5664,2432],[8160,2432],[8160,4032],[5664,4032],[5664,2432]],science,48);
 
   // Southern extensions have longer runs and different aspect ratios.
   array(2752,3968,11,6,'assembler',['advanced','gear','steel'],'purpleScience',3);
@@ -190,7 +189,9 @@ export function buildLandscape(f: FactoryCore) {
     const d=lane*32;
     f.route([[320,3008+d],[1696-d,3008+d],[1696-d,3168+d],[2496+d,3168+d],[2496+d,1856-d],[3776,1856-d]],lane%2?'copper':'iron',46,lane*40);
     f.route([[8000+d,2208],[8000+d,2304+d],[5440-d,2304+d],[5440-d,3712+d],[3520+d,3712+d],[3520+d,5184],[5248,5184]],bus[lane],40+lane);
-    f.route([[2848,5632+d],[3264+d,5632+d],[3264+d,6144-d],[7136+d,6144-d],[7136+d,6944+d],[10112,6944+d]],bus[(lane+1)%8],43);
+    // Storage and the fan start east of the accumulator field, in the service
+    // corridor. No belt or loading point occupies a power-storage tile.
+    f.route([[3072,5632+d],[3456-d,5632+d],[3456-d,6144+d],[7136-d,6144+d],[7136-d,6944+d],[10112,6944+d]],bus[(lane+1)%8],43);
   }
   // Short branches join the arterial routes to each local supply/return manifold.
   const branches: [Point[],AssetName|AssetName[]][] = [

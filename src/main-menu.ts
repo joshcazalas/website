@@ -19,7 +19,6 @@ export const mainMenuMarkup = `
     <section id="entry-loading" class="entry-window entry-loading" aria-labelledby="entry-loading-title" hidden>
       <div class="entry-window-heading"><h2 id="entry-loading-title" tabindex="-1">Loading map</h2><span class="entry-grip" aria-hidden="true"></span></div>
       <div class="entry-loading-body">
-        <div class="entry-save"><img src="${assetUrl('factorio/icons/iron-gear-wheel.png')}" alt="" width="46" height="46"><span>Josh Cazalas — Portfolio<small>Three project outposts</small></span></div>
         <div id="entry-progress" class="entry-progress" role="progressbar" aria-label="Preparing the factory" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div></div></div>
         <div class="entry-load-status"><span id="entry-status" role="status" aria-live="polite">Preparing the surface…</span><span id="entry-percent" aria-hidden="true">0%</span></div>
         <p id="entry-error" hidden></p><button id="entry-retry" class="entry-play" hidden>Retry</button>

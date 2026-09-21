@@ -10,6 +10,7 @@ import type { AuxideAudio } from './auxide-audio';
 export type FactoryDebugState = {
   ready: boolean; entered: boolean; entry: MainMenu['state']; menu: MenuBackdrop['state'];
   machines: number; belts: number; crossings: number; railRoutes: number;
+  conveyors: FactoryCore['conveyorState'];
   camera: { x: number; y: number; zoom: number }; paused: boolean; time: number; fps: number;
   trains: FactoryCore['trainState']; destination: Destination; outpost: FoundationOutpost['state'];
   caz: ReleaseSnapshot & { machines: number; belts: number; crossings: number };

@@ -17,6 +17,12 @@ try {
   await page.waitForTimeout(1600);
   await page.screenshot({ path: process.env.MOBILE_ONLY ? '.local/screenshots/home-mobile.png' : '.local/screenshots/home-desktop.png' });
   console.log('Factory loaded:', await page.evaluate(() => {const {trains,...state}=window.__factory;return {...state,trains:trains.length};}));
+  const conveyors=await page.evaluate(()=>window.__factory.conveyors);
+  assert(conveyors.storageTerminals>0,'Open main-factory routes have chest/inserter terminals');
+  assert(conveyors.loops>=7,'The research belts recirculate around their labs');
+  assert.equal(conveyors.machineOverlaps,0,'No main-factory belt or storage terminal overlaps a machine');
+  assert.equal(conveyors.overlappingTiles,0,'Main-factory conveyors and their storage terminals never share surface tiles');
+  assert.equal(conveyors.unpairedUndergrounds,0,'Every underground entrance has a matching exit');
   if (process.env.VISUAL_ONLY) process.exitCode = 0;
   else {
     const before = await page.evaluate(() => window.__factory.camera);

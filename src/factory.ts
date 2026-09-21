@@ -20,6 +20,7 @@ export const destinations = {
 export type Destination = keyof typeof destinations;
 
 export class Factory extends FactoryCore {
+  protected planConveyors = true;
   private plaza() {
     const { x, y, width: w, height: h } = PLAZA;
     const group = this.group(x, y, w, h);
@@ -63,6 +64,7 @@ export class Factory extends FactoryCore {
   protected build() {
     this.terrain();
     buildLandscape(this);
+    this.finishConveyors();
     this.plaza();
   }
 }

@@ -23,7 +23,7 @@
     "test:deployment": "node scripts/foundation-deployment.test.ts",
     "test:playback": "node scripts/auxide-playback.test.ts",
     "test:auxide": "node scripts/auxide-check.ts",
-    "test:geometry": "node scripts/paths.test.ts",
+    "test:geometry": "node scripts/paths.test.ts && node scripts/belt-network.test.ts",
     "test:release": "node scripts/caz-release.test.ts",
     "test:caz": "node scripts/caz-check.ts",
     "test:menu": "node scripts/menu-check.ts"

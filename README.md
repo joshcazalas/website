@@ -40,7 +40,7 @@ After pulling changes to the sprite catalog or importer, rerun `npm run assets:i
 
 Opening the site shows a modern Factorio-style main menu with a single **Play** button. Three close-up factory scenes rotate behind it: a train yard with persistent looping trains, a research campus with moving science belts, and an active oil refinery. These are authored sprite scenes inspired by [Factorio's menu simulations](https://www.factorio.com/blog/post/fff-362), rendered with the local game assets. The menu uses the same WebGL canvas and atlases as the portfolio; the belt beds animate in these close views. The main factory's existing scenery caching is unchanged.
 
-Play opens a brief map-loading panel, then the identity plaza—or the requested outpost if the URL has a project hash. The transition waits for asset loading and scene construction. The portfolio clock starts only after entering; menu scenes use their own clock and stop updating once hidden. Reduced motion uses a still factory backdrop and a shorter transition. No audio autoplays. Keyboard Enter activates Play; the map controls become available after entry.
+Play keeps the stylized Josh Cazalas logo visible and opens a brief panel showing “Opening the factory…” and a progress bar with a percentage, then the identity plaza—or the requested outpost if the URL has a project hash. The transition waits for asset loading and scene construction. The portfolio clock starts only after entering; menu scenes use their own clock and stop updating once hidden. Reduced motion uses a still factory backdrop and a shorter transition. No audio autoplays. Keyboard Enter activates Play; the map controls become available after entry.
 
 GitHub and LinkedIn links beneath the introduction open the profile pages in new tabs without entering the factory.
 
@@ -97,14 +97,15 @@ The nameplate includes a clickable pixel-lettered repository URL that opens GitH
 ## What the POC does
 
 - Renders original terrain, belts, splitters, underground entrances, items, assemblers, furnaces, labs, refineries, tanks, pipes, roboports, robots, solar panels, accumulators, inserters, radar, rail, and trains.
-- Composes approximately 1,400 machines and 19,500 visible belt tiles around the unchanged concrete identity plaza, with irregular production areas, folded supply lines, mixed-item science loops, chemical processing, and rail sidings.
+- Composes approximately 1,400 machines and 13,400 visible belt tiles around the unchanged concrete identity plaza, with irregular production areas, folded supply lines, mixed-item science loops, chemical processing, and rail sidings.
 - Moves both conveyor lanes continuously through turns and hides items at underground crossings. Seven persistent trains circulate on five complete rail circuits. Each carriage follows the same closed centerline, including across the lap join.
+- Main-factory open belts load and unload through storage chests with synchronized fast-inserter handoffs. Research belts recirculate on closed loops. Belt placement checks the completed machine layout; short straight obstructions use paired undergrounds, while other runs terminate at storage.
 - Mainline trains cruise at 1,760–1,920 world pixels per second (55–60 game tiles per second). Depot trains accelerate, brake, and dwell at their loading tracks. Animation uses elapsed wall time, so lower rendering frame rates do not reduce train speed; hidden tabs and pause do not accumulate catch-up time.
 - Uses packed textures, cached scenery chunks, camera culling, and particle batches for moving belt items.
 - Provides a detached camera, pan/zoom, overview, quick navigation, and an accessible HTML project panel.
 - Uses a tile alphabet for the identity plaza. Those letters live in world coordinates and move with the factory.
 
-This is an authored visual scene, not a Factorio simulation. Items loop through connected visual routes; recipes, electrical networks, resource accounting, inserter transfers, train signals, and dispatch are not simulated. Rail bends are assembled from original track sprite sections. Conveyor beds are cached scenery while their items move. The AWS Foundation outpost illustrates repeatable infrastructure through a scripted construction sequence built from the same imported sprites and shared atlas textures.
+This is an authored visual scene, not a Factorio simulation. Items circulate on closed routes or recycle inside storage chests, with animated inserter transfers at the main factory's belt endpoints. Recipes, electrical networks, chest inventories, resource accounting, train signals, and dispatch are not simulated. Rail bends are assembled from original track sprite sections. Conveyor beds are cached scenery while their items move. The AWS Foundation outpost illustrates repeatable infrastructure through a scripted construction sequence built from the same imported sprites and shared atlas textures.
 
 ## Source map
 
@@ -112,6 +113,7 @@ This is an authored visual scene, not a Factorio simulation. Items loop through 
 - `src/layout.ts`: factory composition, production areas, and transport routes.
 - `src/factory-core.ts`: rendering, sprite animation, underground crossings, train movement, and culling.
 - `src/paths.ts`: conveyor geometry and railway sampling.
+- `src/belt-network.ts` and `src/belt-transfers.ts`: main-factory belt placement, storage terminals, underground pairing, and synchronized item handoffs.
 - `src/rail-network.ts`: closed rail circuits, cruising speeds, train sizes, and depot stops.
 - `src/train-motion.ts`: repeating cruise, acceleration, braking, and dwell schedules.
 - `src/foundation-outpost.ts`: shared foundation layout, blueprint ghosts, construction bots, and completed production.
