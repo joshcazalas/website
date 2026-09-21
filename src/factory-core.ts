@@ -4,6 +4,8 @@ import rawCatalog from './asset-catalog.json';
 import { beltCells, beltPosition, beltRow, createRailLoop, nearestRailDistance, railPosition, wrapDistance, type RailLoop, type Cell, type Point } from './paths';
 import { trainSchedule, trainMotion, type TrainSchedule } from './train-motion';
 import type { RailCircuit } from './rail-network';
+import { intersectsMachine, planBelts, tileKey, type BeltPlan, type BeltRequest } from './belt-network';
+import { storageCycle, transferPosition, transferProgress, TRANSFER_DISTANCE } from './belt-transfers';
 export type { Point } from './paths';
 export type AssetName = keyof typeof rawCatalog;
 type Spec = { file: string; w: number; h: number; dx?: number; dy?: number; scale?: number };
@@ -12,7 +14,8 @@ export type Contact = { label: string; href: string; x: number; y: number; width
 export type View = { left: number; top: number; right: number; bottom: number };
 type Animation = { sprite: Sprite; frames: Texture[]; rate: number; phase: number; owner: Container };
 type Block = { container: Container; x: number; y: number; w: number; h: number; color?: string };
-type Belt = { cells: Cell[]; items: Particle[]; active: boolean; speed: number; phase: number; bounds: View };
+type Transfer = { arm: Sprite; x: number; y: number; dx: number; dy: number; source: boolean };
+type Belt = { cells: Cell[]; items: Particle[]; active: boolean; speed: number; phase: number; bounds: View; transfers?: [Transfer,Transfer] };
 type Train = { id:string; cars: Sprite[]; loop: RailLoop; schedule: TrainSchedule; phase: number };
 type Machine = 'assembler' | 'furnace' | 'lab' | 'chemical' | 'solar' | 'accumulator' | 'refinery' | 'tank' | 'roboport';
 type Packed = { pages: number; assets: Record<string, { scale: number; frames: { page: number; x: number; y: number; w: number; h: number }[] }> };
@@ -30,6 +33,10 @@ export class FactoryCore {
   mapBelts: Point[][] = [];
   protected layers = Array.from({ length: 8 }, () => new Container());
   protected animateConveyors = false;
+  protected planConveyors = false;
+  private beltRequests: BeltRequest<AssetName | AssetName[]>[] = [];
+  private beltPlans: BeltPlan<AssetName | AssetName[]>[] = [];
+  private conveyorSummary = { routes: 0, loops: 0, storageTerminals: 0, machineOverlaps: 0, overlappingTiles: 0, unpairedUndergrounds: 0 };
   private chunks = new Map<string, Block>();
   private animations: Animation[] = [];
   private belts: Belt[] = [];
@@ -112,8 +119,9 @@ export class FactoryCore {
 
   terrain() {
     this.ground(this.layers[0], 'grass', -32768, -32768, 65536, 65536, 0xa7ac8e);
-    // Overlapping irregular patches make a continuous, worn industrial surface.
-    for (const [x, y, w, h] of [[128,0,9280,5664],[800,5312,8320,2048],[32,704,960,4000],[9184,1024,1024,4992]])
+    // The worn ground extends beyond the northern supply chests, western power
+    // field, and southern/eastern rail loops, including the outer belt fans.
+    for (const [x, y, w, h] of [[-128,-384,9728,6336],[320,5088,10432,2560],[-192,384,1344,5472],[8896,1152,1856,5184]])
       this.ground(this.layers[0], 'dirt', x, y, w, h, 0x9e9e8f);
   }
 
@@ -165,6 +173,10 @@ export class FactoryCore {
   /** A continuous, two-lane conveyor, with automatic underground crossings. */
   route(points: Point[], items: AssetName | AssetName[], speed = 44, phase = 0) {
     const cells = beltCells(points); if (cells.length < 2) return;
+    if (this.planConveyors) {
+      this.beltRequests.push({ cells, items, speed, phase });
+      return;
+    }
     const caps: { c: Cell; input: boolean }[] = [];
     // Rail crossings are actual gaps in the visible conveyor, not items drifting
     // over the top of a train. Keep the animation continuous below the surface.
@@ -185,6 +197,64 @@ export class FactoryCore {
       caps.push({c:cells[i-2],input:true},{c:cells[i+2],input:false}); this.crossingCount++;
       i += 3;
     }
+    this.drawBelt(cells, items, speed, phase);
+    for (const {c,input} of caps) this.underground(c,input);
+    if (cells.length > 22) this.mapBelts.push(points);
+  }
+
+  private underground(c: Cell, input: boolean) {
+    const direction = c.dy < 0 ? 0 : c.dx > 0 ? 1 : c.dy > 0 ? 2 : 3;
+    const s = this.entity('underground',c.x,c.y,3);
+    s.texture = this.textures.get('underground')![(input ? 4 : 0)+direction];
+  }
+
+  /** Main-factory routes are resolved after every machine has its footprint. */
+  protected finishConveyors() {
+    this.beltPlans = planBelts(this.beltRequests, c => this.railTiles.has(tileKey(c)) || intersectsMachine(c,this.footprints));
+    // Audit before chest/inserter cells are hidden from belt rendering, so the
+    // footprint check includes the complete terminals as well as exposed belts.
+    const surface = this.beltPlans.flatMap(p => p.cells.filter(c => !c.hidden));
+    this.conveyorSummary = {
+      routes: this.beltPlans.length,
+      loops: this.beltPlans.filter(p => p.closed).length,
+      storageTerminals: this.beltPlans.filter(p => !p.closed).length * 2,
+      machineOverlaps: surface.filter(c => intersectsMachine(c,this.footprints)).length,
+      overlappingTiles: surface.length - new Set(surface.map(tileKey)).size,
+      unpairedUndergrounds: this.beltPlans.filter(p => p.portals.length % 2 !== 0).length,
+    };
+    for (const plan of this.beltPlans) {
+      const { cells, items, speed, phase, closed, portals } = plan;
+      let transfers: [Transfer,Transfer] | undefined;
+      if (!closed) {
+        transfers = [this.storageTerminal(cells.slice(0,3), true),this.storageTerminal(cells.slice(-3).reverse(), false)];
+        // These are chest and inserter tiles, not belt beds. Items travel in the
+        // hand during transfer and only recycle when back inside the chests.
+        for (const c of [...cells.slice(0,2),...cells.slice(-2)]) c.hidden = true;
+      }
+      this.drawBelt(cells,items,speed,phase,transfers);
+      for (const {cell,input} of portals) this.underground(cell,input);
+      this.crossingCount += portals.length / 2;
+      if (cells.length > 22) this.mapBelts.push(cells.filter(c => !c.hidden).map(c => [c.x,c.y]));
+    }
+    this.beltRequests = [];
+  }
+
+  /** Each endpoint gets the original chest and fast-inserter sprites. */
+  private storageTerminal(cells: Cell[], source: boolean): Transfer {
+    const [chest, pivot, belt] = cells;
+    this.entity('chest',chest.x,chest.y);
+    this.entity('inserter',pivot.x,pivot.y);
+    const arm = this.sprite(this.chunk(5,pivot.x,pivot.y),'hand',pivot.x,pivot.y);
+    arm.anchor.set(.5,.83);
+    arm.scale.y = 32 / (arm.texture.height * .83);
+    return { arm, x: pivot.x, y: pivot.y, dx: (belt.x-pivot.x)/32, dy: (belt.y-pivot.y)/32, source };
+  }
+
+  get conveyorState() {
+    return this.conveyorSummary;
+  }
+
+  private drawBelt(cells: Cell[], items: AssetName | AssetName[], speed: number, phase: number, transfers?: [Transfer,Transfer]) {
     for (const c of cells) {
       if (c.hidden) continue;
       const owner = this.chunk(1,c.x,c.y), frames = this.beltFrames[beltRow(c)];
@@ -193,14 +263,9 @@ export class FactoryCore {
       this.beltCount++;
       this.occupied.set(`${c.x}:${c.y}`,c);
     }
-    for (const {c,input} of caps) {
-      const direction = c.dy < 0 ? 0 : c.dx > 0 ? 1 : c.dy > 0 ? 2 : 3;
-      const s = this.entity('underground',c.x,c.y,3);
-      s.texture = this.textures.get('underground')![(input ? 4 : 0)+direction];
-    }
     const variants = Array.isArray(items) ? items : [items];
     const particles: Particle[] = [];
-    const count = Math.ceil(cells.length * 32 / 28) * 2;
+    const count = (transfers ? storageCycle(cells.length).stacks : Math.ceil(cells.length * 32 / 28)) * 2;
     for (let i = 0; i < count; i++) {
       const texture = this.textures.get(variants[(i * 7 + Math.floor(i / 3)) % variants.length])![0];
       let batch = this.itemBatches.get(texture.source);
@@ -213,8 +278,7 @@ export class FactoryCore {
       batch.addParticle(particle); particles.push(particle);
     }
     const xs = cells.map(c=>c.x), ys = cells.map(c=>c.y);
-    this.belts.push({cells,items:particles,active:false,speed,phase,bounds:{left:Math.min(...xs),top:Math.min(...ys),right:Math.max(...xs),bottom:Math.max(...ys)}});
-    if (cells.length > 22) this.mapBelts.push(points);
+    this.belts.push({cells,items:particles,active:false,speed,phase,transfers,bounds:{left:Math.min(...xs),top:Math.min(...ys),right:Math.max(...xs),bottom:Math.max(...ys)}});
   }
 
   splitter(x: number, y: number, east = false) {
@@ -284,12 +348,33 @@ export class FactoryCore {
         belt.active=false;continue;
       }
       belt.active=true;
-      const length=belt.cells.length*32, perLane=belt.items.length/2;
+      const cycle = belt.transfers ? storageCycle(belt.cells.length) : undefined;
+      const length=cycle?.length ?? belt.cells.length*32, perLane=belt.items.length/2;
+      if (belt.transfers && cycle) for (const transfer of belt.transfers) {
+        const offset = transfer.source ? 0 : TRANSFER_DISTANCE + cycle.travel;
+        const t = transferProgress(seconds*belt.speed+belt.phase-offset,cycle.spacing);
+        const [x,y] = transferPosition(transfer.x,transfer.y,transfer.dx,transfer.dy,transfer.source,t);
+        transfer.arm.rotation = Math.atan2(y-transfer.y,x-transfer.x) + Math.PI/2;
+      }
       for(let i=0;i<belt.items.length;i++) {
-        const item=belt.items[i], distance=(Math.floor(i/2)*length/perLane+seconds*belt.speed+belt.phase)%length;
+        const item=belt.items[i], lane=i%2?6:-6;
+        let distance=(Math.floor(i/2)*length/perLane+seconds*belt.speed+belt.phase)%length;
+        if (belt.transfers && cycle) {
+          const source = distance < TRANSFER_DISTANCE;
+          const sink = distance >= TRANSFER_DISTANCE + cycle.travel;
+          if (source || sink) {
+            const transfer = belt.transfers[source ? 0 : 1];
+            const t = (distance - (source ? 0 : TRANSFER_DISTANCE+cycle.travel)) / TRANSFER_DISTANCE;
+            const [x,y] = transferPosition(transfer.x,transfer.y,transfer.dx,transfer.dy,source,t,lane);
+            item.x=x;item.y=y;
+            continue;
+          }
+          // The first/last belt positions are tile centers under the hand.
+          distance = 80 + distance - TRANSFER_DISTANCE;
+        }
         const cell=belt.cells[Math.floor(distance/32)];
         if(cell.hidden||!visible(cell.x,cell.y,view,24)){item.x=-100000;item.y=-100000;continue;}
-        const [x,y]=beltPosition(cell,(distance%32)/32,i%2?6:-6); item.x=x;item.y=y;
+        const [x,y]=beltPosition(cell,(distance%32)/32,lane); item.x=x;item.y=y;
       }
     }
     if(zoom > 0.13) for(const a of this.arms) {
