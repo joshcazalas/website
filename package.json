@@ -29,7 +29,7 @@
     "test:menu": "node scripts/menu-check.ts"
   },
   "dependencies": {
-    "pixi.js": "^8.21.0"
+    "pixi.js": "^8.22.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",
