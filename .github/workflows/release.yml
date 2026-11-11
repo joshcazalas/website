@@ -82,4 +82,22 @@ jobs:
             --notes "Verified website build from commit $COMMIT_SHA."
           gh release edit "$RELEASE_TAG" --repo joshcazalas/website --draft=false
           gh api "repos/joshcazalas/website/releases/tags/$RELEASE_TAG" --jq '.immutable' | grep -qx true
-          gh release verify "$RELEASE_TAG" --repo joshcazalas/website
+      - name: Verify the published release
+        timeout-minutes: 3
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.package.outputs.tag }}
+        run: |
+          # GitHub's release attestation can lag behind successful publication.
+          # Retry only verification, with at most two minutes of waiting.
+          for attempt in {1..25}; do
+            if gh release verify "$RELEASE_TAG" --repo joshcazalas/website; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 25 ]; then
+              echo "Release verification attempt $attempt failed; retrying in 5 seconds."
+              sleep 5
+            fi
+          done
+          echo "::error::Release $RELEASE_TAG was published but could not be verified after 25 attempts."
+          exit 1

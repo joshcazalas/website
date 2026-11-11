@@ -136,8 +136,14 @@ A separate job with write/signing permissions downloads the packaged artifact,
 verifies its full file set and hashes,
 attests every release file, and binds the runtime SBOM to the website archive's
 digest. It creates a draft release, uploads everything, publishes, and verifies
-the resulting immutable release. No npm install or application tests run in the
-privileged publishing job. Failed reruns never overwrite an existing release;
+the resulting immutable release. Because GitHub's release attestation can become
+available after publication, verification runs in a separate step and retries up
+to 25 times, five seconds apart, with a three-minute step timeout. Verification
+must succeed; exhausting the retries still fails the workflow. Only verification
+is retried, never release creation or publication.
+
+No npm install or application tests run in the privileged publishing job.
+Failed reruns never overwrite an existing release;
 inspect an incomplete draft before deleting it and retrying.
 
 Release immutability must remain enabled:
@@ -149,6 +155,8 @@ gh api repos/joshcazalas/website/immutable-releases
 To retry a failed release build, rerun the failed workflow or dispatch `Release`
 against `main`. A commit that already has a published release cannot be republished:
 the existing tag and assets remain immutable.
+If publication succeeded but verification failed, verify the existing release with
+`gh release verify TAG --repo joshcazalas/website` instead of rerunning publication.
 
 ## Server deployment
 
