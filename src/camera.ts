@@ -135,8 +135,12 @@ export class Camera {
         this.tz = Math.min(this.width / 5000, this.height / 2900, 0.65);
         this.ty = 1760;
       }
-    } else if (destination === 'overview') this.tz = Math.min((this.width - 60) / WORLD.width, (this.height - 160) / WORLD.height);
-    else this.tz = Math.min(target.zoom, this.width / 1700);
+    } else if (destination === 'overview') {
+      const fitWidth = Math.max(1, this.width - 60) / WORLD.width;
+      const fitHeight = Math.max(1, this.height - 160) / WORLD.height;
+      this.tz = Math.min(fitWidth, fitHeight);
+      this.minimumZoom = Math.min(this.minimumZoom, this.tz);
+    } else this.tz = Math.min(target.zoom, this.width / 1700);
     this.tz = Math.max(this.minimumZoom, this.tz);
     if (immediate || matchMedia('(prefers-reduced-motion: reduce)').matches) { this.x = this.tx; this.y = this.ty; this.zoom = this.tz; }
     this.onChange();

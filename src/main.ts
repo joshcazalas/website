@@ -143,7 +143,7 @@ async function start() {
   }));
   camera.go(fromHash(), true);
   window.addEventListener('resize', () => {
-    if (!isProject(destination)) return;
+    if (!isProject(destination) && destination !== 'overview') return;
     camera.width = innerWidth; camera.height = innerHeight;
     camera.go(destination, true);
   });
