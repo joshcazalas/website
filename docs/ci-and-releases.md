@@ -98,16 +98,12 @@ ruleset bypass is what permits CI overrides while blocking direct pushes.
 
 ## Release builds
 
-Pull requests run the complete validation suite. Every push to the protected
-`main` branch builds, packages, attests, and publishes a release. This includes
-documentation and dependency PRs. The release workflow
-does not repeat the simulation, browser, lint, or secret checks. This deliberately
-trusts the maintainer's review of PR results; non-strict checks do not test the
-combined result of independently passing PRs, and a bypass does not trigger a
-second test gate. Normal build type checks and artifact integrity checks remain.
+Pull requests and pushes to protected `main` use the same validation workflow.
+Each run builds once, runs source and browser checks, and packages the tested
+artifact. Publication requires the merged commit's validation to succeed,
+including after an admin bypass. The signing job downloads that run's package.
 
-Both workflows share the same build and packaging jobs. PR browser jobs consume
-that build before packaging; main packages its fresh build directly. The release identity is `website-YYYY.MM.DD-g<12-character-commit>`, using
+The release identity is `website-YYYY.MM.DD-g<12-character-commit>`, using
 the commit's UTC date. An archive round trip verifies its contents match the
 tested output. Packaging requires a clean tracked worktree.
 
