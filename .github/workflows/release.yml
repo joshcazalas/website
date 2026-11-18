@@ -14,21 +14,17 @@ concurrency:
   queue: max
 
 jobs:
-  build:
+  validate:
     if: github.ref == 'refs/heads/main'
-    uses: ./.github/workflows/build.yml
+    uses: ./.github/workflows/validate.yml
+    with:
+      package-release: true
     secrets:
       ASSETS_READ_TOKEN: ${{ secrets.ASSETS_READ_TOKEN }}
 
-  package:
-    needs: build
-    uses: ./.github/workflows/package.yml
-    with:
-      build-artifact: ${{ needs.build.outputs.artifact-name }}
-
   publish:
     name: Attest and publish immutable release
-    needs: package
+    needs: validate
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
@@ -45,12 +41,12 @@ jobs:
           package-manager-cache: false
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: ${{ needs.package.outputs.artifact-name }}
+          name: ${{ needs.validate.outputs.artifact-name }}
           path: release
       - name: Check release identity, completeness, and hashes
         env:
           EXPECTED_COMMIT: ${{ github.sha }}
-          EXPECTED_TAG: ${{ needs.package.outputs.tag }}
+          EXPECTED_TAG: ${{ needs.validate.outputs.tag }}
         run: node scripts/verify-release.ts
       - name: Attest every release file
         id: provenance
@@ -73,7 +69,7 @@ jobs:
       - name: Upload a complete draft, then publish
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ needs.package.outputs.tag }}
+          RELEASE_TAG: ${{ needs.validate.outputs.tag }}
           COMMIT_SHA: ${{ github.sha }}
         run: |
           # No clobber or delete: reruns cannot silently replace a release.
@@ -86,7 +82,7 @@ jobs:
         timeout-minutes: 3
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ needs.package.outputs.tag }}
+          RELEASE_TAG: ${{ needs.validate.outputs.tag }}
         run: |
           # GitHub's release attestation can lag behind successful publication.
           # Retry only verification, with at most two minutes of waiting.
