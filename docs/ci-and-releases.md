@@ -1,7 +1,7 @@
 # CI and releases
 
-Every merge to `main` publishes an immutable release containing the complete site,
-SBOMs, inventories, checksums, and signed attestations. PRs run the full validation
+Each immutable release contains the complete site from its commit on `main`,
+along with SBOMs, inventories, checksums, and signed attestations. PRs run the full validation
 suite before merging. The source and finished releases are public; the input asset
 repository remains private.
 
@@ -100,6 +100,11 @@ Do not apply classic admin bypass protection alongside this ruleset: the PR-only
 ruleset bypass is what permits CI overrides while blocking direct pushes.
 
 ## Release builds
+
+Each push to `main` triggers a release. While one release runs, GitHub keeps a
+single pending run. A new arrival replaces the pending run and the active release
+finishes. The next build includes all changes present at its commit, including
+changes from merges whose pending runs were canceled.
 
 Pull requests and pushes to protected `main` use the same validation workflow.
 Each run builds once, runs source and browser checks, and packages the tested
