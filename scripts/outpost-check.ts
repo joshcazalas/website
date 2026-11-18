@@ -1,34 +1,14 @@
-import { enterFactory as ready } from './browser-helpers.ts';
-import { chromium, type Page } from '@playwright/test';
+import { checkRepositoryTab, enterFactory as ready, launchOutpostBrowser, testBase as base, watchPageErrors } from './browser-helpers.ts';
+import type { Page } from '@playwright/test';
 import assert from 'node:assert/strict';
-import { mkdir } from 'node:fs/promises';
 
-await mkdir('.local/screenshots', { recursive: true });
-const browser = await chromium.launch({ headless: true, executablePath: process.env.BROWSER_EXECUTABLE_PATH || undefined,
-  args: ['--no-sandbox', '--enable-unsafe-swiftshader', '--disable-dev-shm-usage'] });
-const base = process.env.TEST_URL || 'http://127.0.0.1:5173/';
+const browser = await launchOutpostBrowser();
 const errors: string[] = [];
-const watch = (page: Page) => {
-  page.on('pageerror', e => errors.push(e.message));
-  page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
-};
 const state = (page: Page) => page.evaluate(() => window.__factory.outpost);
 const repoUrl = 'https://github.com/joshcazalas/aws-foundation';
 const mapRepo = `.world-link[href="${repoUrl}"]`;
-const checkRepoTab = async (page: Page, activate: () => Promise<unknown>) => {
-  // Verify the real anchor/new-tab behavior without loading the external site.
-  await page.context().route(repoUrl, route => route.fulfill({ contentType: 'text/html', body: '<title>Repository</title>' }));
-  const opened = page.waitForEvent('popup');
-  await activate();
-  const tab = await opened;
-  await tab.waitForURL(repoUrl);
-  await tab.close();
-  await page.bringToFront();
-  assert.equal(await page.evaluate(() => window.__factory.destination), 'aws-foundation');
-};
-
 try {
-  const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } }); watch(page);
+  const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } }); watchPageErrors(page, errors);
   await page.goto(base); await ready(page);
   await page.locator('.slot[data-go="aws-foundation"]').click();
   await page.waitForTimeout(1000);
@@ -52,9 +32,9 @@ try {
   assert(zoomedLink, 'Repository link remains visible after zooming');
   assert(zoomedLink.width > pannedLink.width * 1.1, 'Repository hit area scales with map zoom');
   await repo.hover();await page.screenshot({ path: '.local/screenshots/outpost-repo-link.png' });
-  await checkRepoTab(page, () => repo.click());
+  await checkRepositoryTab(page, repoUrl, 'aws-foundation', () => repo.click());
   await page.locator('#foundation-panel [data-go="aws-foundation"]').click();await page.waitForTimeout(900);
-  await repo.focus();await checkRepoTab(page, () => page.keyboard.press('Enter'));
+  await repo.focus();await checkRepositoryTab(page, repoUrl, 'aws-foundation', () => page.keyboard.press('Enter'));
 
   await page.locator('#deploy-foundation').click();
   await page.waitForFunction(() => window.__factory.outpost.phase === 'blueprint');
@@ -110,7 +90,7 @@ try {
   console.log('Passed: quickbar, construction, pause, completed layout, replay, skip, readable content, history, and keyboard Home.');
 
   await page.close();
-  const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' }); watch(mobile);
+  const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: 'reduce' }); watchPageErrors(mobile, errors);
   await mobile.goto(new URL('#aws-foundation', base).href); await ready(mobile);
   await mobile.waitForTimeout(400);
   assert.equal(await mobile.evaluate(() => window.__factory.destination), 'aws-foundation', 'Direct project URL works on a fresh load');
@@ -135,7 +115,7 @@ try {
   }
   await mobile.waitForTimeout(300);
   assert(await mobile.locator(mapRepo).isVisible());
-  await checkRepoTab(mobile, () => mobile.locator(mapRepo).tap());
+  await checkRepositoryTab(mobile, repoUrl, 'aws-foundation', () => mobile.locator(mapRepo).tap());
   await mobile.locator('#foundation-panel [data-go="aws-foundation"]').tap();
   await mobile.locator('#foundation-panel .project-details summary').tap();
   assert(await mobile.locator('#foundation-panel .project-details').evaluate(e => e instanceof HTMLDetailsElement && e.open));

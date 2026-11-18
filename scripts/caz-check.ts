@@ -1,31 +1,15 @@
-import { enterFactory as ready } from './browser-helpers.ts';
-import { chromium, type Page } from '@playwright/test';
+import { checkRepositoryTab, enterFactory as ready, launchOutpostBrowser, testBase as base, watchPageErrors } from './browser-helpers.ts';
+import type { Page } from '@playwright/test';
 import assert from 'node:assert/strict';
-import { mkdir } from 'node:fs/promises';
 
-await mkdir('.local/screenshots',{recursive:true});
-const browser=await chromium.launch({headless:true,executablePath:process.env.BROWSER_EXECUTABLE_PATH||undefined,args:['--no-sandbox','--enable-unsafe-swiftshader','--disable-dev-shm-usage']});
-const base=process.env.TEST_URL||'http://127.0.0.1:5173/';
+const browser = await launchOutpostBrowser();
 const errors: string[] = [];
-const watch=(page: Page) =>{
-  page.on('pageerror',e=>errors.push(e.message));
-  page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
-};
 const state=(page: Page) =>page.evaluate(()=>window.__factory.caz);
 const phase=(page: Page,value: string)=>page.waitForFunction(value=>window.__factory.caz.phase===value,value,{timeout:35000});
 const repoUrl='https://github.com/joshcazalas/caz.nix';
 const mapRepo=`.world-link[href="${repoUrl}"]`;
-const checkRepoTab=async (page: Page, activate: () => Promise<unknown>)=>{
-  // Exercise the map anchor without contacting the external site.
-  await page.context().route(repoUrl,route=>route.fulfill({contentType:'text/html',body:'<title>Repository</title>'}));
-  const opened=page.waitForEvent('popup');
-  await activate();
-  const tab=await opened;
-  await tab.waitForURL(repoUrl);await tab.close();await page.bringToFront();
-  assert.equal(await page.evaluate(()=>window.__factory.destination),'caz-nix');
-};
 try {
-  const page=await browser.newPage({viewport:{width:1600,height:1000}});watch(page);
+  const page=await browser.newPage({viewport:{width:1600,height:1000}});watchPageErrors(page, errors);
   await page.goto(base);await ready(page);
   await page.locator('.slot[data-go="caz-nix"]').click();
   assert.equal(new URL(page.url()).hash,'#caz-nix');
@@ -41,8 +25,8 @@ try {
   assert(await repo.isVisible(),'The pixel repository URL is a visible link');
   assert.equal(await repo.getAttribute('target'),'_blank');
   await repo.hover();await page.screenshot({path:'.local/screenshots/caz-repo-link.png'});
-  await checkRepoTab(page,()=>repo.click());
-  await repo.focus();await checkRepoTab(page,()=>page.keyboard.press('Enter'));
+  await checkRepositoryTab(page, repoUrl, 'caz-nix', ()=>repo.click());
+  await repo.focus();await checkRepositoryTab(page, repoUrl, 'caz-nix', ()=>page.keyboard.press('Enter'));
 
   await page.locator('#caz-deploy').click();await phase(page,'verify');
   assert(await page.locator('#caz-deploy').isDisabled());
@@ -96,7 +80,7 @@ try {
   console.log('Passed: confirmed failure, rollback, restored health, quarantine, repeated releases, skip, project navigation, history, About, and Home.');
   await page.close();
 
-  const mobile=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true,reducedMotion:'reduce'});watch(mobile);
+  const mobile=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true,reducedMotion:'reduce'});watchPageErrors(mobile, errors);
   await mobile.goto(new URL('#caz-nix',base).href);await ready(mobile);
   assert(await mobile.evaluate(()=>window.__factory.paused));
   assert.match(await mobile.locator('#caz-deploy').innerText(),/instantly/);
@@ -107,7 +91,7 @@ try {
   }
   await mobile.screenshot({path:'.local/screenshots/caz-mobile.png'});
   assert(await mobile.locator(mapRepo).isVisible());
-  await checkRepoTab(mobile,()=>mobile.locator(mapRepo).tap());
+  await checkRepositoryTab(mobile, repoUrl, 'caz-nix', ()=>mobile.locator(mapRepo).tap());
   await mobile.locator('#caz-failure').check();await mobile.locator('#caz-deploy').tap();await phase(mobile,'recovered');
   const still=await state(mobile);await mobile.waitForTimeout(350);assert.deepEqual(await state(mobile),still);
   assert.equal(still.active,1);assert(still.quarantined);
