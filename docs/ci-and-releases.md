@@ -56,14 +56,17 @@ simulation tests, archive security tests, Actionlint, and Gitleaks across the
 complete checkout history and tracked tree. Tool downloads are checksum-pinned;
 Actions use full commit pins. Dependabot proposes npm and Actions updates.
 
-Source checks and the production build run in parallel. The build job fetches the
-pinned assets and uploads one production build with its original dependency
+Source checks and the production build run in parallel. A separate runner downloads the
+locked runtime archive using GitHub CLI and jq. It checks out only the lock,
+checks the immutable release metadata, digest, and size, and passes the pack
+as a one-day Actions artifact. The build runner verifies the archive members
+and uploads one production build with its original dependency
 inventories. Five browser jobs test that same build concurrently: home/trains,
 menu/loading, AWS Foundation, Auxide/audio, and caz.nix/rollback. Each verifies the
 source commit, dependency lock, and file hashes before and after testing. A final
 job packages the tested build, including on PRs. `Validate` requires all jobs to
-succeed; skipped, canceled, and failed required work does not satisfy it. The asset
-token is present only in the retrieval step, never in npm or browser-test steps.
+succeed; skipped, canceled, and failed required work does not satisfy it. Only the download runner receives the asset token. It runs the pinned Actions
+and system tools. npm installation and repository scripts run on separate runners.
 
 All repository scripts are TypeScript, run directly by Node 26 with no script
 transpilation step. `npm run check` separately checks the application and scripts
