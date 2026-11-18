@@ -57,7 +57,7 @@ export class Camera {
       this.zoomAt(Math.exp(-event.deltaY * 0.0015), event.clientX, event.clientY);
     }, { passive: false });
     const keyDown = (event: KeyboardEvent) => {
-      if (!this.enabled) return;
+      if (!this.enabled || event.altKey || event.ctrlKey || event.metaKey) return;
       if (document.querySelector('dialog[open]') || (event.target instanceof HTMLElement && event.target.closest('button,a,input,summary'))) return;
       const key = event.key.toLowerCase();
       if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd'].includes(key)) {
