@@ -4,7 +4,7 @@ import rawCatalog from './asset-catalog.json';
 import { beltCells, beltPosition, beltRow, createRailLoop, nearestRailDistance, railPosition, wrapDistance, type RailLoop, type Cell, type Point } from './paths';
 import { trainSchedule, trainMotion, type TrainSchedule } from './train-motion';
 import type { RailCircuit } from './rail-network';
-import { intersectsMachine, planBelts, tileKey, type BeltPlan, type BeltRequest } from './belt-network';
+import { closeBeltLoop, intersectsMachine, planBelts, tileKey, type BeltPlan, type BeltRequest } from './belt-network';
 import { storageCycle, transferPosition, transferProgress, TRANSFER_DISTANCE } from './belt-transfers';
 export type { Point } from './paths';
 export type AssetName = keyof typeof rawCatalog;
@@ -177,6 +177,7 @@ export class FactoryCore {
       this.beltRequests.push({ cells, items, speed, phase });
       return;
     }
+    closeBeltLoop(cells);
     const caps: { c: Cell; input: boolean }[] = [];
     // Rail crossings are actual gaps in the visible conveyor, not items drifting
     // over the top of a train. Keep the animation continuous below the surface.
