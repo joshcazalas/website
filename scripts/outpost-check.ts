@@ -104,7 +104,7 @@ try {
   await page.waitForFunction(() => window.__factory.destination === 'aws-foundation');
   assert.equal((await state(page)).phase, 'online', 'Navigation preserves the existing site');
   await page.locator('#factory-canvas').focus();
-  await page.keyboard.press('h');
+  await page.keyboard.press('Home');
   await page.waitForFunction(() => window.__factory.destination === 'home');
   assert.equal(new URL(page.url()).hash, '');
   console.log('Passed: quickbar, construction, pause, completed layout, replay, skip, readable content, history, and keyboard Home.');
