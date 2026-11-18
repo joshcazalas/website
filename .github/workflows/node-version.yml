@@ -1,0 +1,30 @@
+name: Check Node release pin
+
+on:
+  schedule:
+    - cron: '17 10 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Compare the pinned runtime with the latest release in its major line
+        shell: bash
+        run: |
+          pinned=$(cat .node-version)
+          test "$(jq -r '.engines.node' package.json)" = "$pinned"
+          test "$(jq -r '.packages[""].engines.node' package-lock.json)" = "$pinned"
+          latest=$(curl --fail --silent --show-error --retry 3 https://nodejs.org/dist/index.json |
+            jq -er --arg prefix "v${pinned%%.*}." '[.[] | .version | select(startswith($prefix))][0]')
+          if [[ "v$pinned" != "$latest" ]]; then
+            echo "::error::Node $pinned is pinned. Update .node-version and both npm engine fields to ${latest#v}."
+            exit 1
+          fi
