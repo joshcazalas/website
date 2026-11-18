@@ -46,6 +46,14 @@ try {
     assert(!(await page.locator('#dossier').isVisible()), 'Escape must close the dossier');
     await page.locator('#factory-canvas').focus(); await page.keyboard.press('h'); await page.waitForTimeout(900);
     assert.equal(await page.locator('.world-link[href="mailto:joshuacazalas@gmail.com"]').count(), 1);
+    const shortcuts = await page.evaluate(() => {
+      const canvas = document.querySelector('#factory-canvas')!;
+      const back = new KeyboardEvent('keydown', { key: 'ArrowLeft', altKey: true, bubbles: true, cancelable: true });
+      const location = new KeyboardEvent('keydown', { key: '3', ctrlKey: true, bubbles: true });
+      canvas.dispatchEvent(location);
+      return { allowed: canvas.dispatchEvent(back), destination: window.__factory.destination };
+    });
+    assert.deepEqual(shortcuts, { allowed: true, destination: 'home' });
     await page.keyboard.press('m'); await page.waitForTimeout(900);
     await page.screenshot({ path: '.local/screenshots/overview-desktop.png' });
     const readTrains=()=>page.evaluate(()=>({wall:performance.now()/1000,time:window.__factory.time,trains:window.__factory.trains}));

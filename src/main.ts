@@ -203,7 +203,7 @@ async function start() {
     document.querySelectorAll('.slot[data-go]').forEach(slot => slot.classList.toggle('active', (slot as HTMLElement).dataset.go === button.dataset.go));
   }));
   window.addEventListener('keydown', event => {
-    if (!mainMenu.entered) return;
+    if (!mainMenu.entered || event.altKey || event.ctrlKey || event.metaKey) return;
     if (document.querySelector('dialog[open]') || event.target instanceof HTMLElement && event.target.closest('button,a,input,summary')) return;
     const destination = ['home', 'aws-foundation', 'auxide', 'caz-nix'][Number(event.key) - 1];
     if (destination) document.querySelector<HTMLButtonElement>(`.slot[data-go="${destination}"]`)?.click();
