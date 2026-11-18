@@ -93,6 +93,11 @@ try {
     assert.deepEqual(await mobile.evaluate(()=>window.__factory.trains),parked,'Reduced motion must freeze all trains');
     assert(await mobile.evaluate(() => document.documentElement.scrollWidth === innerWidth), 'Mobile must fit viewport');
     await mobile.screenshot({ path: '.local/screenshots/home-mobile.png' });
+    await mobile.locator('#factory-canvas').focus();
+    await mobile.keyboard.press('m');
+    const overview = await mobile.evaluate(() => window.__factory.camera);
+    assert(overview.zoom > 0 && 10496 * overview.zoom <= 390 - 60, 'Fit the full hub width on mobile');
+    assert(7424 * overview.zoom <= 844 - 160, 'Fit the full hub height above the controls');
     await mobile.locator('#about-open').click();
     assert(await mobile.locator('#dossier').isVisible());
     await mobile.screenshot({ path: '.local/screenshots/dossier-mobile.png' });
