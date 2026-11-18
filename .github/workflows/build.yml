@@ -13,7 +13,55 @@ permissions:
   contents: read
 
 jobs:
+  assets:
+    name: Download locked runtime assets
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      artifact-name: ${{ steps.archive.outputs.artifact-name }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: /assets.lock.json
+          sparse-checkout-cone-mode: false
+      - name: Download the immutable pack with runner-provided tools
+        id: archive
+        env:
+          GH_TOKEN: ${{ secrets.ASSETS_READ_TOKEN }}
+        shell: bash
+        run: |
+          : "${GH_TOKEN:?ASSETS_READ_TOKEN is required to retrieve the private asset pack}"
+          repo=joshcazalas/website-assets
+          name=factorio-runtime.tar.gz
+          jq -e --arg repo "$repo" --arg name "$name" '
+            .repository == $repo and .archive == $name and
+            (.tag | test("^[A-Za-z0-9][A-Za-z0-9._-]+$")) and
+            (.sha256 | test("^[a-f0-9]{64}$")) and (.size > 0)
+          ' assets.lock.json > /dev/null
+          tag=$(jq -r .tag assets.lock.json)
+          sha=$(jq -r .sha256 assets.lock.json)
+          size=$(jq -r .size assets.lock.json)
+          id=$(gh api "repos/$repo/releases/tags/$tag" |
+            jq -er --arg name "$name" --arg digest "sha256:$sha" --argjson size "$size" '
+              select(.immutable and (.draft == false) and (.prerelease == false)) |
+              [.assets[] | select(.name == $name)] | select(length == 1) | .[0] |
+              select(.digest == $digest and .size == $size) | .id | numbers')
+          cd "$RUNNER_TEMP"
+          gh api -H 'Accept: application/octet-stream' "repos/$repo/releases/assets/$id" > "$name"
+          test "$(stat -c %s "$name")" = "$size"
+          echo "$sha  $name" | sha256sum --check --strict
+          echo "artifact-name=website-assets-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ${{ steps.archive.outputs.artifact-name }}
+          path: ${{ runner.temp }}/factorio-runtime.tar.gz
+          retention-days: 1
+          compression-level: 0
+          if-no-files-found: error
+
   build:
+    needs: assets
     name: Build production site
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -28,17 +76,12 @@ jobs:
           node-version-file: .node-version
           package-manager-cache: false
       - run: npm ci
-      # A separate repository credential is scoped to asset retrieval, never to npm or browser tests.
-      # Fork pull requests receive no secret and intentionally cannot satisfy the browser gate.
-      - name: Fetch the pinned private asset pack
-        env:
-          GH_TOKEN: ${{ secrets.ASSETS_READ_TOKEN }}
-        run: |
-          if [ -z "$GH_TOKEN" ]; then
-            echo 'ASSETS_READ_TOKEN is required. Fork contributions need a reviewed maintainer branch for the full browser checks.' >&2
-            exit 1
-          fi
-          node scripts/assets.ts fetch
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: ${{ needs.assets.outputs.artifact-name }}
+          path: .local/runtime-pack
+      - name: Verify and install the runtime assets
+        run: node scripts/assets.ts fetch --archive .local/runtime-pack/factorio-runtime.tar.gz
       - run: npm run build
       - name: Record the build and its original dependency inventories
         run: node scripts/build-artifact.ts create
