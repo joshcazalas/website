@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { beltCells, beltPosition, type Point } from '../src/paths.ts';
-import { intersectsMachine, planBelts, tileKey, type BeltPlan } from '../src/belt-network.ts';
+import { closeBeltLoop, intersectsMachine, planBelts, tileKey, type BeltPlan } from '../src/belt-network.ts';
 import { storageCycle, transferPosition, transferProgress, TRANSFER_DISTANCE } from '../src/belt-transfers.ts';
 
 const request = (points: Point[]) => ({ cells: beltCells(points), items: 'iron', speed: 44, phase: 0 });
@@ -103,4 +103,16 @@ test('storage transfers meet both belt lanes exactly in every direction and recy
     assert.equal(transferProgress(TRANSFER_DISTANCE,cycle.spacing),1);
     assert.equal(transferProgress(cycle.spacing,cycle.spacing),0);
   }
+});
+
+test('service island cargo meets on both lanes at the loop join', () => {
+  const cells = beltCells([[32,160],[800,160],[800,544],[32,544],[32,160]]);
+  const count = cells.length;
+  assert(closeBeltLoop(cells));
+  assert.equal(cells.length, count - 1);
+  for (const lane of [-6,6]) near(beltPosition(cells.at(-1)!,1,lane), beltPosition(cells[0],0,lane));
+  const open = beltCells([[0,0],[96,0]]);
+  const original = structuredClone(open);
+  assert.equal(closeBeltLoop(open), false);
+  assert.deepEqual(open, original);
 });

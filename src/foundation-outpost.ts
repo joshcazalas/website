@@ -1,3 +1,4 @@
+import { closeBeltLoop } from './belt-network';
 import { Container, Graphics, Sprite } from 'pixi.js';
 import { FactoryCore, type AssetName, type View } from './factory-core';
 import { beltCells, beltPosition, beltRow, type Cell, type Point } from './paths';
@@ -113,11 +114,7 @@ export class FoundationOutpost extends FactoryCore {
   private belt(site: Site, points: Point[], items: AssetName[], stage: BuildStage) {
     // Close the seam explicitly so both the belt corner and its cargo remain continuous.
     const cells = beltCells(points);
-    if (points[0][0] === points.at(-1)![0] && points[0][1] === points.at(-1)![1]) {
-      cells.pop();
-      const a = cells[0], b = cells.at(-1)!;
-      a.ix = Math.sign(a.x - b.x); a.iy = Math.sign(a.y - b.y);
-    }
+    closeBeltLoop(cells);
     for (let i = 0; i < cells.length; i += 6) {
       const batch = cells.slice(i, i + 6), center = batch[Math.floor(batch.length / 2)];
       this.part(site, stage, center.x, center.y, parent => {

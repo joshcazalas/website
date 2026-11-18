@@ -6,6 +6,19 @@ export type BeltPlan<T = string> = BeltRequest<T> & { closed: boolean; portals: 
 export type Footprint = { x: number; y: number; half: number };
 export const tileKey = ({ x, y }: { x: number; y: number }) => `${x}:${y}`;
 
+export function closeBeltLoop(cells: Cell[]): boolean {
+  if (cells.length < 3) return false;
+  const first = cells[0];
+  const endpoint = cells[cells.length - 1];
+  if (first.x !== endpoint.x || first.y !== endpoint.y) return false;
+
+  cells.pop();
+  const previous = cells[cells.length - 1];
+  first.ix = previous.dx;
+  first.iy = previous.dy;
+  return true;
+}
+
 /** Use the actual footprint, including off-grid, even-sized machines. */
 export function intersectsMachine(cell: Cell, machines: Footprint[]) {
   return machines.some(p => Math.abs(p.x - cell.x) < p.half + 16 - .01 && Math.abs(p.y - cell.y) < p.half + 16 - .01);
@@ -25,12 +38,7 @@ export function planBelts<T>(requests: BeltRequest<T>[], blocked: (cell: Cell) =
   for (const request of requests) {
     let cells = request.cells.map(c => ({ ...c }));
     if (cells.length < 2) continue;
-    const loop = tileKey(cells[0]) === tileKey(cells.at(-1)!);
-    if (loop) {
-      cells.pop();
-      cells[0].ix = cells.at(-1)!.dx;
-      cells[0].iy = cells.at(-1)!.dy;
-    }
+    const loop = closeBeltLoop(cells);
     const seen = new Set<string>();
     let solid = cells.map(c => {
       const key = tileKey(c), obstruction = blocked(c) || occupied.has(key) || seen.has(key);
