@@ -113,6 +113,15 @@ try {
   await broken.goto(base);await broken.locator('#entry-retry').waitFor({state:'visible'});
   assert(await broken.locator('#factory-shell').evaluate(e => e instanceof HTMLElement && e.hidden));
   assert.match(await broken.locator('#entry-error').innerText(),/assets:import/);
+  for (const [name, href] of [
+    ['Email', 'mailto:joshuacazalas@gmail.com'],
+    ['GitHub', 'https://github.com/joshcazalas'],
+    ['LinkedIn', 'https://www.linkedin.com/in/joshcazalas/'],
+  ]) {
+    const link = broken.getByRole('link', { name });
+    assert(await link.isVisible());
+    assert.equal(await link.getAttribute('href'), href);
+  }
   await broken.unroute('**/factorio/packed/manifest.json');
   await broken.locator('#entry-retry').click();await broken.locator('#play-factory').waitFor({state:'visible'});
   await enterFactory(broken);await broken.close();
