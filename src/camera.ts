@@ -65,7 +65,10 @@ export class Camera {
         this.keys.add(key);
       }
       if (key === 'm') this.go('overview');
-      if (key === 'h') this.go('home');
+      if (key === 'h' || key === 'home') {
+        event.preventDefault();
+        this.go('home');
+      }
       if (key === '=' || key === '+') this.zoomAt(1.25);
       if (key === '-') this.zoomAt(0.8);
     };
