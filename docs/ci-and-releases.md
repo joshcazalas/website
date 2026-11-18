@@ -38,7 +38,7 @@ plus the custom nameplate. Extra original sprites, local PDFs, and other files i
 
 To change assets:
 
-1. Update the catalog/importer/sample list and import from the intended game version.
+1. Update the catalog/importer/sample list and import from the intended game version. For a planned version upgrade, use `npm run assets:import -- --game-version VERSION /path/to/Factorio`.
 2. Run `node scripts/assets.ts pack --game-version VERSION --tag UNIQUE-TAG`.
 3. Upload `.local/asset-packs/factorio-runtime.tar.gz` and its `assets.lock.json`
    to a **draft** release in the private asset repo, then publish the complete release.

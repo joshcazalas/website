@@ -4,7 +4,7 @@ A Factorio-inspired portfolio for joshcazalas.com. Explore an animated megafacto
 
 ## Run locally in WSL
 
-Requires the Node.js version in `.node-version` and either access to the private runtime asset pack or a local installation of Factorio with the base-game graphics.
+Requires the Node.js version in `.node-version` and either access to the private runtime asset pack or a local installation of Factorio **2.0.77** with the base-game graphics. The importer checks the installed version against `assets.lock.json` before copying files.
 
 ```bash
 npm ci

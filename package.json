@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "vite --host 127.0.0.1",
-    "assets:import": "node scripts/import-assets.ts",
+    "assets:import": "node scripts/import-local.ts",
     "assets:fetch": "node scripts/assets.ts fetch",
     "assets:verify": "node scripts/assets.ts verify",
     "check": "tsc --noEmit && tsc -p tsconfig.scripts.json",
