@@ -1,4 +1,8 @@
 import { assetUrl } from './asset-url';
+const profileLinks = `<a href="https://github.com/joshcazalas" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a>
+          <span aria-hidden="true">·</span>
+          <a href="https://www.linkedin.com/in/joshcazalas/" target="_blank" rel="noopener noreferrer">LinkedIn <span aria-hidden="true">↗</span></a>`;
+
 export const mainMenuMarkup = `
   <section id="entry-screen" class="entry-screen" aria-label="Main menu" data-state="menu">
     <div id="menu-backdrop" aria-hidden="true"></div>
@@ -10,9 +14,7 @@ export const mainMenuMarkup = `
         <button id="play-factory" class="entry-play">Play</button>
         <p class="entry-context">A portfolio inspired by my favorite game, Factorio.</p>
         <nav class="entry-links" aria-label="Find Josh online">
-          <a href="https://github.com/joshcazalas" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a>
-          <span aria-hidden="true">·</span>
-          <a href="https://www.linkedin.com/in/joshcazalas/" target="_blank" rel="noopener noreferrer">LinkedIn <span aria-hidden="true">↗</span></a>
+          ${profileLinks}
         </nav>
       </div>
     </div>
@@ -22,6 +24,11 @@ export const mainMenuMarkup = `
         <div id="entry-progress" class="entry-progress" role="progressbar" aria-label="Preparing the factory" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div></div></div>
         <div class="entry-load-status"><span id="entry-status" role="status" aria-live="polite">Preparing the surface…</span><span id="entry-percent" aria-hidden="true">0%</span></div>
         <p id="entry-error" hidden></p><button id="entry-retry" class="entry-play" hidden>Retry</button>
+        <nav id="entry-error-links" class="entry-links" aria-label="Contact Josh" hidden>
+          <a href="mailto:joshuacazalas@gmail.com">Email</a>
+          <span aria-hidden="true">·</span>
+          ${profileLinks}
+        </nav>
       </div>
     </section>
     <footer class="entry-footer"><span>JOSHCAZALAS.COM</span><span>Factory artwork © Wube Software</span></footer>
@@ -101,6 +108,7 @@ export class MainMenu {
     const detail=document.querySelector<HTMLElement>('#entry-error')!;
     detail.hidden=false;detail.textContent=error instanceof Error?error.message:String(error);
     const retry=document.querySelector<HTMLButtonElement>('#entry-retry')!;
+    document.querySelector<HTMLElement>('#entry-error-links')!.hidden = false;
     retry.hidden=false;retry.focus({preventScroll:true});
   }
 }
