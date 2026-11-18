@@ -9,9 +9,10 @@ permissions:
   contents: read
 
 concurrency:
-  group: release-main
+  # A manual run on another ref must not displace a pending main release.
+  group: release-${{ github.ref == 'refs/heads/main' && 'main' || 'skipped' }}
+  # Finish the active release. The default single pending slot keeps the newest arrival.
   cancel-in-progress: false
-  queue: max
 
 jobs:
   validate:

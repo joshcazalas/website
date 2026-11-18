@@ -39,9 +39,7 @@ jobs:
       - name: Install pinned security and workflow tools
         run: node scripts/install-ci-tools.ts
       - name: Check workflow syntax and expressions
-        # GitHub supports queue:max; actionlint 1.7.12 does not yet recognize it.
-        # https://github.com/rhysd/actionlint/issues/657
-        run: .local/tools/actionlint -ignore 'unexpected key "queue" for "concurrency" section'
+        run: .local/tools/actionlint
       - name: Scan the entire Git history
         run: .local/tools/gitleaks git --log-opts=--all --redact --no-banner .
       - name: Scan tracked working files
