@@ -14,7 +14,7 @@
     "check": "tsc --noEmit && tsc -p tsconfig.scripts.json",
     "build": "npm run check && node scripts/prepare-public.ts && vite build",
     "test:unit": "npm run test:geometry && npm run test:deployment && npm run test:playback && npm run test:release",
-    "test:packaging": "node --test scripts/assets.test.ts scripts/build-artifact.test.ts",
+    "test:packaging": "node --test scripts/assets.test.ts scripts/assets-import.test.ts scripts/build-artifact.test.ts",
     "test:production": "node scripts/production-check.ts",
     "release:package": "node scripts/package-release.ts",
     "preview": "vite preview --host 127.0.0.1",

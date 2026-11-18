@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { copyFileSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
-import { fileURLToPath } from 'node:url';
+import { INPUTS, receiptPath, requiredFiles, type ImportReceipt } from './assets.ts';
+import { fileDigest, ROOT, writeJson } from './lib/artifacts.ts';
 
 const { values, positionals } = parseArgs({
   allowPositionals: true,
@@ -25,5 +26,32 @@ const expectedVersion = values['game-version'] ?? lock.factorio_version;
 assert.equal(game.version, expectedVersion,
   `Found Factorio ${game.version} at ${installation}. Install Factorio ${expectedVersion} or run npm run assets:fetch for the pinned pack.`);
 
-const recipe = fileURLToPath(new URL('./import-assets.ts', import.meta.url));
-execFileSync(process.execPath, [recipe, resolve(installation), ...(values['menu-only'] ? ['--menu-only'] : [])], { stdio: 'inherit' });
+const recipe = 'scripts/import-assets.ts';
+if (values['menu-only']) {
+  execFileSync(process.execPath, [join(ROOT, recipe), resolve(installation), '--menu-only'], { stdio: 'inherit' });
+} else {
+  mkdirSync(dirname(receiptPath), { recursive: true });
+  const work = mkdtempSync(join(dirname(receiptPath), 'import-'));
+  try {
+    // The generator resolves its catalog and output relative to its script.
+    // Run the exact snapshotted inputs in a clean tree so old outputs cannot enter a receipt.
+    for (const name of INPUTS) {
+      mkdirSync(dirname(join(work, name)), { recursive: true });
+      copyFileSync(join(ROOT, name), join(work, name));
+    }
+    execFileSync(process.execPath, [join(work, recipe), resolve(installation)], { stdio: 'inherit' });
+    const generated = join(work, 'public/factorio');
+    const receipt: ImportReceipt = {
+      schema: 1,
+      factorio_version: game.version,
+      inputs: Object.fromEntries(INPUTS.map(name => [name, fileDigest(join(work, name)).sha256])),
+      files: Object.fromEntries(requiredFiles(generated, work).map(name => [name, fileDigest(join(generated, name))])),
+    };
+    cpSync(generated, join(ROOT, 'public/factorio'), { recursive: true });
+    const stagedReceipt = join(work, 'receipt.json');
+    writeJson(stagedReceipt, receipt);
+    renameSync(stagedReceipt, receiptPath);
+  } finally {
+    rmSync(work, { recursive: true, force: true });
+  }
+}

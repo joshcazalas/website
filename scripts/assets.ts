@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, renameSync, rmSync, realpathSync, openSync, closeSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, renameSync, rmSync, realpathSync, openSync, closeSync, existsSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { archiveFiles, command, fileDigest, isMain, readJson, ROOT, unpackVerified, writeJson } from './lib/artifacts.ts';
@@ -13,21 +13,24 @@ export type AssetLock = {
   schema: 1; repository: string; tag: string; archive: string; sha256: string; size: number;
   factorio_version: string; inputs: Record<string, string>; files: Inventory;
 };
-export function checkInputs(lock: AssetLock): void {
+export type ImportReceipt = Pick<AssetLock, 'schema' | 'factorio_version' | 'inputs' | 'files'>;
+export const receiptPath = join(ROOT, '.local/asset-import.json');
+
+export function checkInputs(lock: Pick<AssetLock, 'schema' | 'inputs'>): void {
   assert.equal(lock.schema, 1, 'Unsupported asset lock schema');
   for (const name of INPUTS) assert.equal(lock.inputs[name], fileDigest(join(ROOT, name)).sha256, `${name} changed; regenerate and publish an asset pack`);
 }
-export function requiredFiles(directory: string): string[] {
+export function requiredFiles(directory: string, inputsRoot = ROOT): string[] {
   const { pages } = readJson<{ pages: number }>(join(directory, 'packed/manifest.json'));
   assert(Number.isInteger(pages) && pages >= 1 && pages <= 32, 'Invalid atlas page count');
   return [
     'packed/manifest.json',
     ...Array.from({ length: pages }, (_, i) => `packed/atlas-${i}.png`),
     ...ICONS.map(name => `icons/${name}`), ...FONTS.map(name => `fonts/${name}`),
-    ...Object.values(readJson<Record<string, string>>(join(ROOT, 'src/auxide-samples.json'))).map(name => `sound/programmable-speaker/${name}`),
+    ...Object.values(readJson<Record<string, string>>(join(inputsRoot, 'src/auxide-samples.json'))).map(name => `sound/programmable-speaker/${name}`),
   ].sort();
 }
-export function verifyInstalled(lock: AssetLock, directory: string): void {
+export function verifyInstalled(lock: ImportReceipt, directory: string): void {
   checkInputs(lock);
   assert.deepEqual(requiredFiles(directory), Object.keys(lock.files).sort(), 'Asset lock does not match required runtime files');
   for (const [name, expected] of Object.entries(lock.files)) assert.deepEqual(fileDigest(join(directory, name)), expected, `Asset differs from the lock: ${name}`);
@@ -35,18 +38,30 @@ export function verifyInstalled(lock: AssetLock, directory: string): void {
 function pack(lockPath: string, tag: string, version: string, output: string): void {
   assert(/^[A-Za-z0-9][A-Za-z0-9._-]+$/.test(tag), 'Invalid asset tag');
   const source = join(ROOT, 'public/factorio');
-  const names = requiredFiles(source);
+  assert(existsSync(receiptPath), 'Run a full npm run assets:import before packing runtime assets');
+  const receipt = readJson<ImportReceipt>(receiptPath);
+  assert.equal(version, receipt.factorio_version, 'The requested game version differs from the completed import');
+  verifyInstalled(receipt, source);
+
   mkdirSync(output, { recursive: true });
-  const archive = join(output, 'factorio-runtime.tar.gz');
-  archiveFiles(source, names, archive);
-  const lock: AssetLock = {
-    schema: 1, repository: 'joshcazalas/website-assets', tag, archive: 'factorio-runtime.tar.gz',
-    ...fileDigest(archive), factorio_version: version,
-    inputs: Object.fromEntries(INPUTS.map(name => [name, fileDigest(join(ROOT, name)).sha256])),
-    files: Object.fromEntries(names.map(name => [name, fileDigest(join(source, name))])),
-  };
-  writeJson(lockPath, lock); writeJson(join(output, 'assets.lock.json'), lock);
-  console.log(`Packed ${names.length} runtime files into ${archive} (${lock.size.toLocaleString()} bytes)`);
+  const work = mkdtempSync(join(output, '.pack-'));
+  try {
+    const archiveName = 'factorio-runtime.tar.gz';
+    const archive = join(work, archiveName);
+    const names = Object.keys(receipt.files);
+    archiveFiles(source, names, archive);
+    // Check the bytes actually archived, including if an import ran during packing.
+    unpackVerified(archive, receipt.files, join(work, 'verified'));
+    const lock: AssetLock = {
+      ...receipt, repository: 'joshcazalas/website-assets', tag, archive: archiveName, ...fileDigest(archive),
+    };
+    renameSync(archive, join(output, archiveName));
+    writeJson(join(output, 'assets.lock.json'), lock);
+    writeJson(lockPath, lock);
+    console.log(`Packed ${names.length} runtime files for Factorio ${receipt.factorio_version}`);
+  } finally {
+    rmSync(work, { recursive: true, force: true });
+  }
 }
 type AssetRelease = { draft: boolean; prerelease: boolean; immutable: boolean; assets: { id: number; name: string; size: number; digest: string }[] };
 function fetchAssets(lock: AssetLock, localArchive?: string): void {
